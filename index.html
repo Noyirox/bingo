@@ -112,6 +112,27 @@
         
         .confetti { position: absolute; width: 10px; height: 10px; pointer-events: none; z-index: 1500; }
         #reset-btn { margin-top: 20px; padding: 12px 25px; border: none; background: #333; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; }
+    
+    /* Style spécifique pour le top 3 */
+.hof-item:nth-child(1) { 
+    background: linear-gradient(90deg, #fff7e6, #fff);
+    border: 2px solid #ffd700; /* Or */
+    transform: scale(1.05);
+}
+.hof-item:nth-child(2) { 
+    border-left: 5px solid #c0c0c0; /* Argent */
+}
+.hof-item:nth-child(3) { 
+    border-left: 5px solid #cd7f32; /* Bronze */
+}
+
+.hof-item span:last-child {
+    background: #ff00cc;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+}
     </style>
 </head>
 <body>
@@ -154,14 +175,38 @@
         }
 
         function listenToHOF() {
-            database.ref('winners').orderByChild('timestamp').limitToLast(10).on('value', (snap) => {
-                const winners = [];
-                snap.forEach(child => { winners.unshift(child.val()); });
-                document.getElementById('hof-content').innerHTML = winners.map(w => `
-                    <div class="hof-item"><span>${w.name}</span><span style="color:#888; font-size:0.8rem">${w.date}</span></div>
-                `).join('') || '<p>En attente du premier champion...</p>';
-            });
-        }
+    database.ref('winners').on('value', (snap) => {
+        const data = snap.val();
+        if (!data) return;
+
+        // 1. Compter les victoires par nom
+        const scores = {};
+        Object.values(data).forEach(winner => {
+            scores[winner.name] = (scores[winner.name] || 0) + 1;
+        });
+
+        // 2. Transformer en tableau et trier
+        const ranking = Object.keys(scores)
+            .map(name => ({ name: name, count: scores[name] }))
+            .sort((a, b) => b.count - a.count);
+
+        // 3. Générer le HTML (avec médailles pour le Top 3)
+        const content = document.getElementById('hof-content');
+        content.innerHTML = ranking.map((w, index) => {
+            let medal = "";
+            if (index === 0) medal = "🥇 ";
+            else if (index === 1) medal = "🥈 ";
+            else if (index === 2) medal = "🥉 ";
+            
+            return `
+                <div class="hof-item">
+                    <span>${medal}${w.name}</span>
+                    <span style="font-weight:900; color:#ff00cc;">${w.count} pts</span>
+                </div>
+            `;
+        }).join('');
+    });
+}
 
         // 3. LOGIQUE JEU
         document.addEventListener('DOMContentLoaded', function() {
@@ -197,10 +242,14 @@
                     bingoMessage.classList.add('show');
                     triggerConfetti();
                     setTimeout(() => {
-                        const name = prompt("BINGO ! Ton nom pour le Hall of Fame :");
-                        if (name) saveToHOF(name);
-                        bingoMessage.classList.remove('show');
-                    }, 2600);
+    let rawName = prompt("BINGO ! Ton nom pour le Hall of Fame :");
+    if (rawName && rawName.trim() !== "") {
+        // Nettoie le nom : enlève les espaces et met en majuscules
+        const cleanName = rawName.trim().toUpperCase(); 
+        saveToHOF(cleanName);
+    }
+    msg.classList.remove('show');
+}, 2600);
                 }
             }
 
