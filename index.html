@@ -105,10 +105,42 @@
 
         /* --- UI HALL OF FAME --- */
         #hof-btn { position: absolute; top: 15px; right: 15px; background: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; }
-        #hof-panel { position: fixed; inset: 0; background: rgba(255,255,255,0.98); z-index: 3000; display: none; flex-direction: column; align-items: center; padding-top: 50px; }
+        
+        #hof-panel { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255,255,255,0.98); 
+            z-index: 3000; 
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            padding-top: 50px; 
+        }
+
+        #admin-reset-hof {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #ffebee;
+            color: #d32f2f;
+            border: 1px solid #ffcdd2;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+
+        #admin-reset-hof:hover {
+            background: #f44336;
+            color: white;
+        }
+
         #hof-panel.active { display: flex; }
         .hof-list { width: 85%; max-width: 350px; margin-top: 20px; }
-        .hof-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border: 1px solid #eee; font-weight: 600; }
+        .hof-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border: 1px solid #eee; font-weight: 600; align-items: center; }
         
         .confetti { position: absolute; width: 10px; height: 10px; pointer-events: none; z-index: 1500; }
         #reset-btn { margin-top: 20px; padding: 12px 25px; border: none; background: #333; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; }
@@ -140,11 +172,11 @@
     <button id="hof-btn">🏆</button>
 
     <div id="hof-panel">
-        <h2>🏆 Hall of Fame 🏆</h2>
-        <div class="hof-list" id="hof-content">Chargement...</div>
-        <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
-        <button id="admin-reset-hof" style="color:red; font-size:0.7rem; margin-top:10px; border:none; background:none; cursor:pointer;">Réinitialiser la saison</button>
-    </div>
+    <button id="admin-reset-hof">Réinitialiser la saison</button>
+    <h2>🏆 Podium des Champions 🏆</h2>
+    <div class="hof-list" id="hof-content">Chargement...</div>
+    <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
+</div>
 
     <h1>✨ Bingo Bureau ✨</h1>
     <div id="bingo-message">BINGO !</div>
@@ -239,67 +271,94 @@ function listenToHOF() {
     }
 }
         // 3. LOGIQUE JEU
-        document.addEventListener('DOMContentLoaded', function() {
-            const bingoCard = document.getElementById('bingo-card');
-            const bingoMessage = document.getElementById('bingo-message');
-            const resetBtn = document.getElementById('reset-btn');
-            const hofBtn = document.getElementById('hof-btn');
+document.addEventListener('DOMContentLoaded', function() {
+    const bingoCard = document.getElementById('bingo-card');
+    const bingoMessage = document.getElementById('bingo-message');
+    const resetBtn = document.getElementById('reset-btn');
+    const hofBtn = document.getElementById('hof-btn');
 
-            const banqueDeMots = ["ASAP", "Point", "Synergie", "Brainstorming", "Feedback", "Dans le pipe", "Agile", "N'hésite pas", "Reviens vers toi", "Cordialement", "Prioriser", "Disruptif", "Mindset", "User-friendly", "KPI", "Deadline", "Workflow", "Benchmark", "Ecosystème", "Factuel", "Micro coupé", "Hors sujet", "Valeur ajoutée", "In fine", "Scope"];
+    const STORAGE_KEY = 'bingo_save_v1';
+    const banqueDeMots = ["ASAP", "Point", "Synergie", "Brainstorming", "Feedback", "Dans le pipe", "Agile", "N'hésite pas", "Reviens vers toi", "Cordialement", "Prioriser", "Disruptif", "Mindset", "User-friendly", "KPI", "Deadline", "Workflow", "Benchmark", "Ecosystème", "Factuel", "Micro coupé", "Hors sujet", "Valeur ajoutée", "In fine", "Scope"];
 
-            function createBingoCard() {
-                bingoCard.innerHTML = '';
-                const selected = [...banqueDeMots].sort(() => 0.5 - Math.random()).slice(0, 25);
-                selected.forEach(mot => {
-                    const cell = document.createElement('div');
-                    cell.className = 'bingo-cell';
-                    cell.textContent = mot;
-                    cell.onclick = function() {
-                        this.classList.toggle('clicked');
-                        checkWin();
-                    };
-                    bingoCard.appendChild(cell);
-                });
-            }
-
-            function checkWin() {
-                const cells = Array.from(document.querySelectorAll('.bingo-cell'));
-                const isClicked = i => cells[i].classList.contains('clicked');
-                const winConditions = [[0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24], [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24], [0,6,12,18,24], [4,8,12,16,20]];
-                
-                if (winConditions.some(cond => cond.every(isClicked))) {
-                    if (bingoMessage.classList.contains('show')) return;
-                    bingoMessage.classList.add('show');
-                    triggerConfetti();
-                    setTimeout(() => {
-    let rawName = prompt("BINGO ! Ton nom pour le Hall of Fame :");
-    if (rawName && rawName.trim() !== "") {
-        // Nettoie le nom : enlève les espaces et met en majuscules
-        const cleanName = rawName.trim().toUpperCase(); 
-        saveToHOF(cleanName);
-    }
-    msg.classList.remove('show');
-}, 2600);
-                }
-            }
-
-            function triggerConfetti() {
-                for (let i = 0; i < 80; i++) {
-                    const c = document.createElement('div');
-                    c.className = 'confetti';
-                    c.style.left = Math.random() * 100 + 'vw';
-                    c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                    document.body.appendChild(c);
-                    c.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(100vh)',opacity:0}], {duration: 2000+Math.random()*2000}).onfinish = () => c.remove();
-                }
-            }
-
-            resetBtn.onclick = () => { if(confirm('Nouvelle grille ?')) createBingoCard(); };
-            hofBtn.onclick = () => document.getElementById('hof-panel').classList.add('active');
-
+    // Créer ou Charger la grille
+    function initBingo() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            bingoCard.innerHTML = saved;
+            // Réattacher les clics sur les cellules chargées
+            document.querySelectorAll('.bingo-cell').forEach(cell => {
+                cell.onclick = toggleCell;
+            });
+        } else {
             createBingoCard();
-            listenToHOF();
+        }
+    }
+
+    function createBingoCard() {
+        bingoCard.innerHTML = '';
+        const selected = [...banqueDeMots].sort(() => 0.5 - Math.random()).slice(0, 25);
+        selected.forEach(mot => {
+            const cell = document.createElement('div');
+            cell.className = 'bingo-cell';
+            cell.textContent = mot;
+            cell.onclick = toggleCell;
+            bingoCard.appendChild(cell);
         });
+        saveLocal();
+    }
+
+    function toggleCell() {
+        this.classList.toggle('clicked');
+        saveLocal();
+        checkWin();
+    }
+
+    function saveLocal() {
+        localStorage.setItem(STORAGE_KEY, bingoCard.innerHTML);
+    }
+
+    function checkWin() {
+        const cells = Array.from(document.querySelectorAll('.bingo-cell'));
+        const isClicked = i => cells[i].classList.contains('clicked');
+        const winConditions = [[0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24], [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24], [0,6,12,18,24], [4,8,12,16,20]];
+        
+        if (winConditions.some(cond => cond.every(isClicked))) {
+            if (bingoMessage.classList.contains('show')) return;
+            bingoMessage.classList.add('show');
+            triggerConfetti();
+            setTimeout(() => {
+                let rawName = prompt("BINGO ! Ton nom pour le Hall of Fame :");
+                if (rawName && rawName.trim() !== "") {
+                    saveToHOF(rawName);
+                }
+                bingoMessage.classList.remove('show');
+            }, 2600);
+        }
+    }
+
+    function triggerConfetti() {
+        for (let i = 0; i < 80; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.left = Math.random() * 100 + 'vw';
+            c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            document.body.appendChild(c);
+            c.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(100vh)',opacity:0}], {duration: 2000+Math.random()*2000}).onfinish = () => c.remove();
+        }
+    }
+
+    resetBtn.onclick = () => { 
+        if(confirm('Nouvelle grille ? (Toute progression sera perdue)')) {
+            localStorage.removeItem(STORAGE_KEY);
+            createBingoCard(); 
+        }
+    };
+    
+    hofBtn.onclick = () => document.getElementById('hof-panel').classList.add('active');
+
+    initBingo(); // Lancement intelligent
+    listenToHOF();
+});
     </script>
 </body>
 </html>
