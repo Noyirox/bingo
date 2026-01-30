@@ -20,39 +20,42 @@
 
         h1 { color: #333; margin-bottom: 15px; text-shadow: 1px 1px 0px white; }
 
-        #bingo-card {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(5, 1fr);
-            grid-gap: 8px;
-            width: 100%;
-            max-width: 450px;
-            aspect-ratio: 1 / 1;
-            background-color: #ccc;
-            padding: 10px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-        }
+        /* --- GRILLE CARRÉE OPTIMISÉE --- */
+#bingo-card {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    grid-gap: 3px;         /* Réduit l'espace entre les cases */
+    width: 100%;
+    max-width: 450px;
+    aspect-ratio: 1 / 1;
+    background-color: #ccc;
+    padding: 5px;          /* Réduit la bordure extérieure de la grille */
+    border-radius: 10px;   /* Un peu moins arrondi pour gagner des pixels */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
 
-        .bingo-cell {
-            background-color: #fff;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 8px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            user-select: none;
-            font-size: clamp(9px, 2.4vw, 13px);
-            line-height: 1.2;
-            font-weight: 600;
-            color: #444;
-            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
+.bingo-cell {
+    background-color: #fff;
+    border-radius: 4px;    /* Coins plus discrets */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4px;          /* Padding réduit pour maximiser la place du texte */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    
+    /* On peut aussi booster légèrement le clamp pour mobile */
+    font-size: clamp(10px, 3vw, 13px); 
+    
+    line-height: 1.1;      /* Interligne serré pour les mots longs */
+    font-weight: 600;
+    color: #444;
+    position: relative;
+    overflow: hidden;
+}
 
         .bingo-cell:hover {
             background-color: #fff;
