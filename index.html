@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bingo</title>
+    <title>Bingo Bureau</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -41,6 +41,7 @@
             word-break: break-word;
             padding: 2px;
             box-sizing: border-box;
+            user-select: none; /* Empêche la sélection du texte au clic */
         }
         .bingo-cell:hover {
             background-color: #f0f0f0;
@@ -66,6 +67,18 @@
             animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;
             pointer-events: none;
         }
+        /* Bouton pour réinitialiser si besoin */
+        #reset-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff7043;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
         @keyframes fadeIn {
             from { opacity: 0; transform: translate(-50%, -60%); }
             to { opacity: 1; transform: translate(-50%, -50%); }
@@ -80,11 +93,17 @@
     <h1>Bingo</h1>
     <div id="bingo-message">Bingo !</div>
     <div id="bingo-card"></div>
+    <button id="reset-btn">Nouvelle Grille</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
             const bingoMessage = document.getElementById('bingo-message');
+            const resetBtn = document.getElementById('reset-btn');
+
+            // J'ai changé la clé de sauvegarde pour forcer le navigateur à oublier l'ancienne grille de nombres
+            const STORAGE_KEY_DATE = 'bingoDate_v2';
+            const STORAGE_KEY_CARD = 'bingoCard_v2';
 
             const mots = [
                 "Bonjour", "Au revoir", "Merci", "S'il vous plaît", "Excusez-moi",
@@ -98,99 +117,100 @@
             function createBingoCard() {
                 bingoCard.innerHTML = '';
                 const selectedMots = [];
+                // Copie du tableau pour éviter les répétitions sans boucle infinie si liste courte
+                let tempMots = [...mots]; 
+                
                 while (selectedMots.length < 25) {
-                    const mot = mots[Math.floor(Math.random() * mots.length)];
-                    if (!selectedMots.includes(mot)) {
-                        selectedMots.push(mot);
-                    }
+                    if (tempMots.length === 0) tempMots = [...mots]; // Sécurité si moins de 25 mots
+                    const randomIndex = Math.floor(Math.random() * tempMots.length);
+                    selectedMots.push(tempMots[randomIndex]);
+                    tempMots.splice(randomIndex, 1); // Retire le mot choisi pour éviter les doublons
                 }
                 
                 for (let i = 0; i < 25; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
                     cell.textContent = selectedMots[i];
-                    cell.addEventListener('click', function() {
-                        this.classList.toggle('clicked');
-                        saveBingoCard();
-                        checkWin();
-                    });
+                    addCellEvent(cell); // Fonction séparée pour attacher l'événement
                     bingoCard.appendChild(cell);
                 }
+                saveBingoCard(); // Sauvegarder immédiatement la nouvelle création
             }
 
+            function addCellEvent(cell) {
+                cell.addEventListener('click', function() {
+                    this.classList.toggle('clicked');
+                    saveBingoCard();
+                    checkWin();
+                });
+            }
 
             // Charger une grille sauvegardée ou en créer une nouvelle
             function loadBingoCard() {
                 const today = new Date().toDateString();
-                const savedDate = localStorage.getItem('bingoDate');
-                const savedCard = localStorage.getItem('bingoCard');
+                const savedDate = localStorage.getItem(STORAGE_KEY_DATE);
+                const savedCard = localStorage.getItem(STORAGE_KEY_CARD);
 
                 if (savedDate === today && savedCard) {
                     bingoCard.innerHTML = savedCard;
-                    // Ajouter les événements de clic aux cellules
+                    // Réattacher les événements car innerHTML ne conserve pas les listeners
                     document.querySelectorAll('.bingo-cell').forEach(cell => {
-                        cell.addEventListener('click', function() {
-                            this.classList.toggle('clicked');
-                            saveBingoCard();
-                            checkWin();
-                        });
+                        addCellEvent(cell);
                     });
                 } else {
                     createBingoCard();
-                    localStorage.setItem('bingoDate', today);
+                    localStorage.setItem(STORAGE_KEY_DATE, today);
                 }
             }
 
             // Sauvegarder la grille actuelle
             function saveBingoCard() {
-                localStorage.setItem('bingoCard', bingoCard.innerHTML);
+                localStorage.setItem(STORAGE_KEY_CARD, bingoCard.innerHTML);
             }
+
+            // Bouton pour forcer une nouvelle grille
+            resetBtn.addEventListener('click', function() {
+                if(confirm('Voulez-vous vraiment générer une nouvelle grille ?')) {
+                    localStorage.removeItem(STORAGE_KEY_CARD);
+                    createBingoCard();
+                    localStorage.setItem(STORAGE_KEY_DATE, new Date().toDateString());
+                }
+            });
 
             // Charger la grille au démarrage
             loadBingoCard();
 
-            // Sauvegarder la grille lors de la fermeture de la page
-            window.addEventListener('beforeunload', saveBingoCard);
-
             // Vérifier si une ligne, colonne ou diagonale est complétée
             function checkWin() {
                 const cells = document.querySelectorAll('.bingo-cell');
-                const clickedCells = Array.from(cells).filter(cell => cell.classList.contains('clicked'));
+                
+                // Fonction utilitaire pour vérifier un groupe d'indices
+                const checkIndices = (indices) => indices.every(index => cells[index].classList.contains('clicked'));
 
                 // Vérifier les lignes
                 for (let i = 0; i < 5; i++) {
-                    const row = Array.from(cells).slice(i * 5, i * 5 + 5);
-                    if (row.every(cell => cell.classList.contains('clicked'))) {
-                        showBingoMessage();
-                        return;
-                    }
+                    if (checkIndices([i*5, i*5+1, i*5+2, i*5+3, i*5+4])) { showBingoMessage(); return; }
                 }
 
                 // Vérifier les colonnes
                 for (let i = 0; i < 5; i++) {
-                    const column = Array.from(cells).filter((_, index) => index % 5 === i);
-                    if (column.every(cell => cell.classList.contains('clicked'))) {
-                        showBingoMessage();
-                        return;
-                    }
+                    if (checkIndices([i, i+5, i+10, i+15, i+20])) { showBingoMessage(); return; }
                 }
 
                 // Vérifier les diagonales
-                const diagonal1 = Array.from(cells).filter((_, index) => index % 6 === 0);
-                const diagonal2 = Array.from(cells).filter((_, index) => index % 4 === 0 && index !== 0 && index < 20);
-                if (diagonal1.every(cell => cell.classList.contains('clicked'))) {
-                    showBingoMessage();
-                    return;
-                }
-                if (diagonal2.every(cell => cell.classList.contains('clicked'))) {
-                    showBingoMessage();
-                    return;
-                }
+                // Diagonale 1 (Haut-Gauche -> Bas-Droite): 0, 6, 12, 18, 24
+                if (checkIndices([0, 6, 12, 18, 24])) { showBingoMessage(); return; }
+
+                // Diagonale 2 (Haut-Droite -> Bas-Gauche): 4, 8, 12, 16, 20
+                if (checkIndices([4, 8, 12, 16, 20])) { showBingoMessage(); return; }
             }
 
             // Afficher le message de victoire
             function showBingoMessage() {
                 bingoMessage.style.display = 'block';
+                // Reset l'animation pour qu'elle puisse rejouer
+                const newOne = bingoMessage.cloneNode(true);
+                bingoMessage.parentNode.replaceChild(newOne, bingoMessage);
             }
         });
     </script>
