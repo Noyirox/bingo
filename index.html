@@ -143,6 +143,7 @@
         <h2>🏆 Hall of Fame 🏆</h2>
         <div class="hof-list" id="hof-content">Chargement...</div>
         <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
+        <button id="admin-reset-hof" style="color:red; font-size:0.7rem; margin-top:10px; border:none; background:none; cursor:pointer;">Réinitialiser la saison</button>
     </div>
 
     <h1>✨ Bingo Bureau ✨</h1>
@@ -154,6 +155,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
+function formatName(str) {
+    return str.toLowerCase().replace(/(^|[\s-])\S/g, function (match) {
+        return match.toUpperCase();
+    });
+}
+        
         // 1. CONFIGURATION (A remplir avec TES infos)
         const firebaseConfig = {
     apiKey: "AIzaSyCoj07_H212qNd1oe_-mUdZrjrYh0Js4fA",
@@ -168,16 +175,31 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // 2. LOGIQUE CLOUD
-        function saveToHOF(name) {
-            const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-            database.ref('winners').push({ name, date, timestamp: Date.now() });
-        }
+        // --- 2. LOGIQUE CLOUD ---
 
-        function listenToHOF() {
+// Fonction magique pour le formatage "Jean-Pierre"
+function formatName(str) {
+    return str.toLowerCase().replace(/(^|[\s-])\S/g, match => match.toUpperCase());
+}
+
+function saveToHOF(name) {
+    // On enregistre toujours en MAJUSCULES pour que les scores se cumulent bien
+    const cleanName = name.trim().toUpperCase();
+    database.ref('winners').push({ 
+        name: cleanName, 
+        timestamp: Date.now() 
+    });
+}
+
+function listenToHOF() {
     database.ref('winners').on('value', (snap) => {
         const data = snap.val();
-        if (!data) return;
+        const content = document.getElementById('hof-content');
+        
+        if (!data) {
+            content.innerHTML = "<p>En attente du premier champion...</p>";
+            return;
+        }
 
         // 1. Compter les victoires par nom
         const scores = {};
@@ -185,13 +207,12 @@
             scores[winner.name] = (scores[winner.name] || 0) + 1;
         });
 
-        // 2. Transformer en tableau et trier
+        // 2. Transformer en tableau et trier du plus grand au plus petit
         const ranking = Object.keys(scores)
             .map(name => ({ name: name, count: scores[name] }))
             .sort((a, b) => b.count - a.count);
 
-        // 3. Générer le HTML (avec médailles pour le Top 3)
-        const content = document.getElementById('hof-content');
+        // 3. Générer le HTML avec Podium et formatage du texte
         content.innerHTML = ranking.map((w, index) => {
             let medal = "";
             if (index === 0) medal = "🥇 ";
@@ -200,14 +221,23 @@
             
             return `
                 <div class="hof-item">
-                    <span>${medal}${w.name}</span>
-                    <span style="font-weight:900; color:#ff00cc;">${w.count} pts</span>
+                    <span>${medal}${formatName(w.name)}</span>
+                    <span>${w.count} ${w.count > 1 ? 'victoires' : 'victoire'}</span>
                 </div>
             `;
         }).join('');
     });
-}
 
+    // Activation du bouton Reset (Saison)
+    const resetHofBtn = document.getElementById('admin-reset-hof');
+    if(resetHofBtn) {
+        resetHofBtn.onclick = () => {
+            if(confirm("Effacer tous les scores et recommencer la saison ?")) {
+                database.ref('winners').remove();
+            }
+        };
+    }
+}
         // 3. LOGIQUE JEU
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
