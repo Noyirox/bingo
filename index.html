@@ -43,37 +43,32 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #player-name {
-            margin-bottom: 20px;
-        }
-        #hall-of-fame {
-            margin-top: 20px;
+        #bingo-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 48px;
+            display: none;
+            z-index: 100;
         }
     </style>
 </head>
 <body>
     <h1>Bingo</h1>
-    <div id="player-name">
-        <label for="name">Entrez votre nom:</label>
-        <input type="text" id="name" />
-        <button id="start-game">Commencer</button>
-    </div>
+    <div id="bingo-message">Bingo !</div>
     <div id="bingo-card"></div>
     <button id="new-game">Nouvelle Partie</button>
-    <div id="hall-of-fame">
-        <h2>Hall of Fame</h2>
-        <ul id="winners-list"></ul>
-    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
             const newGameButton = document.getElementById('new-game');
-            const startGameButton = document.getElementById('start-game');
-            const nameInput = document.getElementById('name');
-            const winnersList = document.getElementById('winners-list');
-
-            let playerName = '';
+            const bingoMessage = document.getElementById('bingo-message');
 
             // Créer une grille de bingo
             function createBingoCard() {
@@ -101,8 +96,11 @@
 
             // Charger une grille sauvegardée ou en créer une nouvelle
             function loadBingoCard() {
+                const today = new Date().toDateString();
+                const savedDate = localStorage.getItem('bingoDate');
                 const savedCard = localStorage.getItem('bingoCard');
-                if (savedCard) {
+
+                if (savedDate === today && savedCard) {
                     bingoCard.innerHTML = savedCard;
                     // Ajouter les événements de clic aux cellules
                     document.querySelectorAll('.bingo-cell').forEach(cell => {
@@ -114,6 +112,7 @@
                     });
                 } else {
                     createBingoCard();
+                    localStorage.setItem('bingoDate', today);
                 }
             }
 
@@ -126,17 +125,7 @@
             newGameButton.addEventListener('click', function() {
                 localStorage.removeItem('bingoCard');
                 createBingoCard();
-            });
-
-            // Commencer une nouvelle partie avec le nom du joueur
-            startGameButton.addEventListener('click', function() {
-                playerName = nameInput.value;
-                if (playerName) {
-                    document.getElementById('player-name').style.display = 'none';
-                    createBingoCard();
-                } else {
-                    alert('Veuillez entrer votre nom.');
-                }
+                localStorage.setItem('bingoDate', new Date().toDateString());
             });
 
             // Charger la grille au démarrage
@@ -154,8 +143,7 @@
                 for (let i = 0; i < 5; i++) {
                     const row = Array.from(cells).slice(i * 5, i * 5 + 5);
                     if (row.every(cell => cell.classList.contains('clicked'))) {
-                        alert(`Félicitations ${playerName}! Vous avez complété une ligne.`);
-                        addToHallOfFame(playerName);
+                        showBingoMessage();
                         return;
                     }
                 }
@@ -164,8 +152,7 @@
                 for (let i = 0; i < 5; i++) {
                     const column = Array.from(cells).filter((_, index) => index % 5 === i);
                     if (column.every(cell => cell.classList.contains('clicked'))) {
-                        alert(`Félicitations ${playerName}! Vous avez complété une colonne.`);
-                        addToHallOfFame(playerName);
+                        showBingoMessage();
                         return;
                     }
                 }
@@ -174,35 +161,22 @@
                 const diagonal1 = Array.from(cells).filter((_, index) => index % 6 === 0);
                 const diagonal2 = Array.from(cells).filter((_, index) => index % 4 === 0 && index !== 0 && index < 20);
                 if (diagonal1.every(cell => cell.classList.contains('clicked'))) {
-                    alert(`Félicitations ${playerName}! Vous avez complété une diagonale.`);
-                    addToHallOfFame(playerName);
+                    showBingoMessage();
                     return;
                 }
                 if (diagonal2.every(cell => cell.classList.contains('clicked'))) {
-                    alert(`Félicitations ${playerName}! Vous avez complété une diagonale.`);
-                    addToHallOfFame(playerName);
+                    showBingoMessage();
                     return;
                 }
             }
 
-            // Ajouter le nom du joueur au hall of fame
-            function addToHallOfFame(name) {
-                let winners = JSON.parse(localStorage.getItem('winners')) || [];
-                if (!winners.includes(name)) {
-                    winners.push(name);
-                    localStorage.setItem('winners', JSON.stringify(winners));
-                }
-                updateHallOfFame();
+            // Afficher le message de victoire
+            function showBingoMessage() {
+                bingoMessage.style.display = 'block';
+                setTimeout(() => {
+                    bingoMessage.style.display = 'none';
+                }, 3000);
             }
-
-            // Mettre à jour le hall of fame
-            function updateHallOfFame() {
-                const winners = JSON.parse(localStorage.getItem('winners')) || [];
-                winnersList.innerHTML = winners.map(winner => `<li>${winner}</li>`).join('');
-            }
-
-            // Charger le hall of fame au démarrage
-            updateHallOfFame();
         });
     </script>
 </body>
