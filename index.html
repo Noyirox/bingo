@@ -34,15 +34,6 @@
         .bingo-cell.clicked {
             background-color: #ffcccc;
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
         #bingo-message {
             position: fixed;
             top: 50%;
@@ -55,6 +46,14 @@
             font-size: 48px;
             display: none;
             z-index: 100;
+            border: 5px solid #ffcc00;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -62,12 +61,10 @@
     <h1>Bingo</h1>
     <div id="bingo-message">Bingo !</div>
     <div id="bingo-card"></div>
-    <button id="new-game">Nouvelle Partie</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
-            const newGameButton = document.getElementById('new-game');
             const bingoMessage = document.getElementById('bingo-message');
 
             // Créer une grille de bingo
@@ -120,13 +117,6 @@
             function saveBingoCard() {
                 localStorage.setItem('bingoCard', bingoCard.innerHTML);
             }
-
-            // Nouvelle partie
-            newGameButton.addEventListener('click', function() {
-                localStorage.removeItem('bingoCard');
-                createBingoCard();
-                localStorage.setItem('bingoDate', new Date().toDateString());
-            });
 
             // Charger la grille au démarrage
             loadBingoCard();
