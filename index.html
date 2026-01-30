@@ -22,44 +22,28 @@
             margin-bottom: 20px;
         }
         .bingo-cell {
-            width: 60px;
-            height: 60px;
+            width: 100px;
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #fff;
             border: 1px solid #e0e0e0;
-            font-size: 20px;
+            font-size: 14px;
             cursor: pointer;
             border-radius: 4px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease;
+            text-align: center;
+            word-wrap: break-word;
+            padding: 5px;
         }
         .bingo-cell:hover {
             background-color: #f0f0f0;
         }
         .bingo-cell.clicked {
-            background-color: #ffcccc;
-            color: #d32f2f;
-        }
-        .btn {
-            padding: 12px 24px;
-            font-size: 16px;
-            background-color: #1976d2;
+            background-color: #81C784;
             color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .btn:hover {
-            background-color: #1565c0;
-            transform: translateY(-1px);
-        }
-        .btn:active {
-            transform: translateY(0);
         }
         #bingo-message {
             position: fixed;
@@ -75,6 +59,7 @@
             z-index: 100;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
             animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;
+            pointer-events: none;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translate(-50%, -60%); }
@@ -90,29 +75,35 @@
     <h1>Bingo</h1>
     <div id="bingo-message">Bingo !</div>
     <div id="bingo-card"></div>
-    <button id="new-game" class="btn">Nouvelle Partie</button>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
-            const newGameButton = document.getElementById('new-game');
             const bingoMessage = document.getElementById('bingo-message');
+
+            const mots = [
+                "Bonjour", "Au revoir", "Merci", "S'il vous plaît", "Excusez-moi",
+                "Oui", "Non", "Peut-être", "Bonne journée", "À bientôt",
+                "Comment ça va ?", "Très bien", "Pas mal", "Ci joint", "Je vous remercie",
+                "Cordialement", "Bien à vous", "À votre disposition", "N'hésitez pas", "Pour info",
+                "En pièce jointe", "Pour rappel", "Comme convenu", "Comme discuté", "Comme évoqué"
+            ];
 
             // Créer une grille de bingo
             function createBingoCard() {
                 bingoCard.innerHTML = '';
-                const numbers = [];
-                while (numbers.length < 25) {
-                    const num = Math.floor(Math.random() * 75) + 1;
-                    if (!numbers.includes(num)) {
-                        numbers.push(num);
+                const selectedMots = [];
+                while (selectedMots.length < 25) {
+                    const mot = mots[Math.floor(Math.random() * mots.length)];
+                    if (!selectedMots.includes(mot)) {
+                        selectedMots.push(mot);
                     }
                 }
 
                 for (let i = 0; i < 25; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
-                    cell.textContent = numbers[i];
+                    cell.textContent = selectedMots[i];
                     cell.addEventListener('click', function() {
                         this.classList.toggle('clicked');
                         saveBingoCard();
@@ -148,13 +139,6 @@
             function saveBingoCard() {
                 localStorage.setItem('bingoCard', bingoCard.innerHTML);
             }
-
-            // Nouvelle partie
-            newGameButton.addEventListener('click', function() {
-                localStorage.removeItem('bingoCard');
-                createBingoCard();
-                localStorage.setItem('bingoDate', new Date().toDateString());
-            });
 
             // Charger la grille au démarrage
             loadBingoCard();
