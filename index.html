@@ -45,12 +45,12 @@
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             user-select: none;
-            font-size: clamp(10px, 2.5vw, 14px); /* Texte légèrement agrandi pour mobile */
+            font-size: clamp(9px, 2.4vw, 13px);
             line-height: 1.2;
             font-weight: 600;
             color: #444;
             box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
-            position: relative; /* Indispensable pour placer le tampon */
+            position: relative;
             overflow: hidden;
         }
 
@@ -70,12 +70,11 @@
             background-size: 85%;
             background-repeat: no-repeat;
             background-position: center;
-            opacity: 0.7; /* Pour voir le texte sous le tampon */
+            opacity: 0.7;
             pointer-events: none;
             animation: stamp 0.2s ease-out;
         }
 
-        /* Petit effet d'écrasement quand le tampon apparaît */
         @keyframes stamp {
             0% { transform: scale(1.5); opacity: 0; }
             100% { transform: scale(1); opacity: 0.7; }
@@ -83,8 +82,7 @@
 
         #bingo-message {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
             opacity: 0;
             background: linear-gradient(45deg, #ff00cc, #3333ff, #ffcc00, #ff00cc);
@@ -115,8 +113,7 @@
 
         .confetti {
             position: absolute;
-            width: 10px;
-            height: 10px;
+            width: 10px; height: 10px;
             pointer-events: none;
             z-index: 1500;
         }
@@ -132,9 +129,7 @@
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
-            transition: all 0.2s;
         }
-        #reset-btn:hover { background: #000; transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -150,20 +145,36 @@
             const bingoMessage = document.getElementById('bingo-message');
             const resetBtn = document.getElementById('reset-btn');
 
-            const STORAGE_KEY_DATE = 'bingoDate_v4'; 
-            const STORAGE_KEY_CARD = 'bingoCard_v4';
+            const STORAGE_KEY_DATE = 'bingoDate_v5'; 
+            const STORAGE_KEY_CARD = 'bingoCard_v5';
 
-            const mots = [
-                "Bonjour", "Au revoir", "Merci", "S'il vous plaît", "Excusez-moi",
-                "Oui", "Non", "Peut-être", "Bonne journée", "À bientôt",
-                "Comment ça va ?", "Très bien", "Pas mal", "Ci joint", "Je vous remercie",
-                "Cordialement", "Bien à vous", "À votre disposition", "N'hésitez pas", "Pour info",
-                "En pièce jointe", "Pour rappel", "Comme convenu", "Comme discuté", "Comme évoqué"
+            // --- LISTE ÉTENDUE ---
+            const banqueDeMots = [
+                "ASAP", "On fait un point", "Synergie", "Brainstorming", "Feedback",
+                "C'est dans le pipe", "Hors sujet", "Agile", "Force de proposition", "N'hésite pas",
+                "Revenir vers toi", "Cordialement", "Prendre de la hauteur", "Prioriser", "Disruptif",
+                "Je dis ça je dis rien", "Bonne journée", "En pièce jointe", "Merci d'avance", "Pas de souci",
+                "On est raccord", "À la fin de la journée", "Best practices", "Valeur ajoutée", "Mindset",
+                "Top-down", "User-friendly", "D'un point de vue business", "In fine", "Factuel",
+                "Désolé j'avais mon micro coupé", "Tu m'entends ?", "On voit ton écran", "Globalement", "Workflow",
+                "Scope", "Brief", "Débriefer", "KPI", "Deadline",
+                "Ressources", "Logistique", "Transverse", "Silo", "Écosystème",
+                "Lever de rideau", "Scalable", "Go/No Go", "Benchmark", "Mettre en musique"
             ];
+
+            function getRandomWords(n) {
+                // Mélange Fisher-Yates pour un vrai hasard
+                const shuffled = [...banqueDeMots];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled.slice(0, n);
+            }
 
             function createBingoCard() {
                 bingoCard.innerHTML = '';
-                const selectedMots = [...mots].sort(() => 0.5 - Math.random());
+                const selectedMots = getRandomWords(25);
                 for (let i = 0; i < 25; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
@@ -187,13 +198,11 @@
             function checkWin() {
                 const cells = Array.from(document.querySelectorAll('.bingo-cell'));
                 const isClicked = i => cells[i].classList.contains('clicked');
-                
                 const winConditions = [
                     [0,1,2,3,4], [5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [20,21,22,23,24],
                     [0,5,10,15,20], [1,6,11,16,21], [2,7,12,17,22], [3,8,13,18,23], [4,9,14,19,24],
                     [0,6,12,18,24], [4,8,12,16,20]
                 ];
-
                 if (winConditions.some(condition => condition.every(isClicked))) {
                     triggerWin();
                 }
@@ -208,25 +217,22 @@
 
             function createConfetti() {
                 for (let i = 0; i < 100; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.className = 'confetti';
-                    confetti.style.left = Math.random() * 100 + 'vw';
-                    confetti.style.top = '-10px';
-                    confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                    document.body.appendChild(confetti);
-                    confetti.animate([
+                    const c = document.createElement('div');
+                    c.className = 'confetti';
+                    c.style.left = Math.random() * 100 + 'vw';
+                    c.style.top = '-10px';
+                    c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    document.body.appendChild(c);
+                    c.animate([
                         { transform: `translate3d(0,0,0) rotate(0deg)`, opacity: 1 },
                         { transform: `translate3d(${(Math.random() - 0.5) * 200}px, 100vh, 0) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-                    ], {
-                        duration: 2000 + Math.random() * 3000,
-                        easing: 'cubic-bezier(0, .9, .57, 1)',
-                        delay: Math.random() * 200
-                    }).onfinish = () => confetti.remove();
+                    ], { duration: 2500 + Math.random() * 2000, easing: 'ease-out' }).onfinish = () => c.remove();
                 }
             }
 
             function loadBingoCard() {
                 const today = new Date().toDateString();
+                // Si c'est le même jour, on charge. Sinon, on crée.
                 if (localStorage.getItem(STORAGE_KEY_DATE) === today && localStorage.getItem(STORAGE_KEY_CARD)) {
                     bingoCard.innerHTML = localStorage.getItem(STORAGE_KEY_CARD);
                     document.querySelectorAll('.bingo-cell').forEach(cell => cell.addEventListener('click', toggleCell));
@@ -237,7 +243,7 @@
             }
 
             resetBtn.addEventListener('click', () => {
-                if(confirm('Générer une nouvelle grille ?')) {
+                if(confirm('Générer une nouvelle grille avec d\'autres mots ?')) {
                     createBingoCard();
                     localStorage.setItem(STORAGE_KEY_DATE, new Date().toDateString());
                 }
