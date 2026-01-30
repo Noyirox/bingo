@@ -72,6 +72,7 @@
                     cell.textContent = numbers[i];
                     cell.addEventListener('click', function() {
                         this.classList.toggle('clicked');
+                        saveBingoCard();
                     });
                     bingoCard.appendChild(cell);
                 }
