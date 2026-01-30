@@ -43,17 +43,37 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        #player-name {
+            margin-bottom: 20px;
+        }
+        #hall-of-fame {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Bingo</h1>
+    <div id="player-name">
+        <label for="name">Entrez votre nom:</label>
+        <input type="text" id="name" />
+        <button id="start-game">Commencer</button>
+    </div>
     <div id="bingo-card"></div>
     <button id="new-game">Nouvelle Partie</button>
+    <div id="hall-of-fame">
+        <h2>Hall of Fame</h2>
+        <ul id="winners-list"></ul>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const bingoCard = document.getElementById('bingo-card');
             const newGameButton = document.getElementById('new-game');
+            const startGameButton = document.getElementById('start-game');
+            const nameInput = document.getElementById('name');
+            const winnersList = document.getElementById('winners-list');
+
+            let playerName = '';
 
             // Créer une grille de bingo
             function createBingoCard() {
@@ -73,6 +93,7 @@
                     cell.addEventListener('click', function() {
                         this.classList.toggle('clicked');
                         saveBingoCard();
+                        checkWin();
                     });
                     bingoCard.appendChild(cell);
                 }
@@ -88,6 +109,7 @@
                         cell.addEventListener('click', function() {
                             this.classList.toggle('clicked');
                             saveBingoCard();
+                            checkWin();
                         });
                     });
                 } else {
@@ -106,11 +128,81 @@
                 createBingoCard();
             });
 
+            // Commencer une nouvelle partie avec le nom du joueur
+            startGameButton.addEventListener('click', function() {
+                playerName = nameInput.value;
+                if (playerName) {
+                    document.getElementById('player-name').style.display = 'none';
+                    createBingoCard();
+                } else {
+                    alert('Veuillez entrer votre nom.');
+                }
+            });
+
             // Charger la grille au démarrage
             loadBingoCard();
 
             // Sauvegarder la grille lors de la fermeture de la page
             window.addEventListener('beforeunload', saveBingoCard);
+
+            // Vérifier si une ligne, colonne ou diagonale est complétée
+            function checkWin() {
+                const cells = document.querySelectorAll('.bingo-cell');
+                const clickedCells = Array.from(cells).filter(cell => cell.classList.contains('clicked'));
+
+                // Vérifier les lignes
+                for (let i = 0; i < 5; i++) {
+                    const row = Array.from(cells).slice(i * 5, i * 5 + 5);
+                    if (row.every(cell => cell.classList.contains('clicked'))) {
+                        alert(`Félicitations ${playerName}! Vous avez complété une ligne.`);
+                        addToHallOfFame(playerName);
+                        return;
+                    }
+                }
+
+                // Vérifier les colonnes
+                for (let i = 0; i < 5; i++) {
+                    const column = Array.from(cells).filter((_, index) => index % 5 === i);
+                    if (column.every(cell => cell.classList.contains('clicked'))) {
+                        alert(`Félicitations ${playerName}! Vous avez complété une colonne.`);
+                        addToHallOfFame(playerName);
+                        return;
+                    }
+                }
+
+                // Vérifier les diagonales
+                const diagonal1 = Array.from(cells).filter((_, index) => index % 6 === 0);
+                const diagonal2 = Array.from(cells).filter((_, index) => index % 4 === 0 && index !== 0 && index < 20);
+                if (diagonal1.every(cell => cell.classList.contains('clicked'))) {
+                    alert(`Félicitations ${playerName}! Vous avez complété une diagonale.`);
+                    addToHallOfFame(playerName);
+                    return;
+                }
+                if (diagonal2.every(cell => cell.classList.contains('clicked'))) {
+                    alert(`Félicitations ${playerName}! Vous avez complété une diagonale.`);
+                    addToHallOfFame(playerName);
+                    return;
+                }
+            }
+
+            // Ajouter le nom du joueur au hall of fame
+            function addToHallOfFame(name) {
+                let winners = JSON.parse(localStorage.getItem('winners')) || [];
+                if (!winners.includes(name)) {
+                    winners.push(name);
+                    localStorage.setItem('winners', JSON.stringify(winners));
+                }
+                updateHallOfFame();
+            }
+
+            // Mettre à jour le hall of fame
+            function updateHallOfFame() {
+                const winners = JSON.parse(localStorage.getItem('winners')) || [];
+                winnersList.innerHTML = winners.map(winner => `<li>${winner}</li>`).join('');
+            }
+
+            // Charger le hall of fame au démarrage
+            updateHallOfFame();
         });
     </script>
 </body>
