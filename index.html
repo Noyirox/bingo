@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #bingo-card {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 5px;
+            margin-bottom: 20px;
+        }
+        .bingo-cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            border: 1px solid #000;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .bingo-cell.clicked {
+            background-color: #ffcccc;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bingo</h1>
+    <div id="bingo-card"></div>
+    <button id="new-game">Nouvelle Partie</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const bingoCard = document.getElementById('bingo-card');
+            const newGameButton = document.getElementById('new-game');
+
+            // Créer une grille de bingo
+            function createBingoCard() {
+                bingoCard.innerHTML = '';
+                const numbers = [];
+                while (numbers.length < 25) {
+                    const num = Math.floor(Math.random() * 75) + 1;
+                    if (!numbers.includes(num)) {
+                        numbers.push(num);
+                    }
+                }
+
+                for (let i = 0; i < 25; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'bingo-cell';
+                    cell.textContent = numbers[i];
+                    cell.addEventListener('click', function() {
+                        this.classList.toggle('clicked');
+                    });
+                    bingoCard.appendChild(cell);
+                }
+            }
+
+            // Charger une grille sauvegardée ou en créer une nouvelle
+            function loadBingoCard() {
+                const savedCard = localStorage.getItem('bingoCard');
+                if (savedCard) {
+                    bingoCard.innerHTML = savedCard;
+                    // Ajouter les événements de clic aux cellules
+                    document.querySelectorAll('.bingo-cell').forEach(cell => {
+                        cell.addEventListener('click', function() {
+                            this.classList.toggle('clicked');
+                            saveBingoCard();
+                        });
+                    });
+                } else {
+                    createBingoCard();
+                }
+            }
+
+            // Sauvegarder la grille actuelle
+            function saveBingoCard() {
+                localStorage.setItem('bingoCard', bingoCard.innerHTML);
+            }
+
+            // Nouvelle partie
+            newGameButton.addEventListener('click', function() {
+                localStorage.removeItem('bingoCard');
+                createBingoCard();
+            });
+
+            // Charger la grille au démarrage
+            loadBingoCard();
+
+            // Sauvegarder la grille lors de la fermeture de la page
+            window.addEventListener('beforeunload', saveBingoCard);
+        });
+    </script>
+</body>
+</html>
