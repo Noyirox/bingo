@@ -104,7 +104,7 @@
                         selectedMots.push(mot);
                     }
                 }
-
+                
                 for (let i = 0; i < 25; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
@@ -117,6 +117,7 @@
                     bingoCard.appendChild(cell);
                 }
             }
+
 
             // Charger une grille sauvegardée ou en créer une nouvelle
             function loadBingoCard() {
