@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bingo Bureau</title>
+    <title>Big Problems</title>
     <style>
+        /* --- STYLES GÉNÉRAUX --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -13,17 +14,26 @@
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: #f0f2f5;
             padding: 20px;
             box-sizing: border-box;
         }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        /* --- GRILLE ET CELLULES --- */
         #bingo-card {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            grid-gap: 4px;
-            margin-bottom: 15px;
+            grid-gap: 5px;
+            margin-bottom: 20px;
             width: 100%;
-            max-width: 350px;
+            max-width: 400px;
+            background-color: #e0e0e0;
+            padding: 5px;
+            border-radius: 8px;
         }
         .bingo-cell {
             aspect-ratio: 1;
@@ -31,67 +41,105 @@
             align-items: center;
             justify-content: center;
             background-color: #fff;
-            border: 1px solid #e0e0e0;
-            font-size: clamp(10px, 2vw, 14px);
+            border-radius: 6px;
+            /* Police ajustée */
+            font-size: clamp(9px, 1.7vw, 13px);
+            font-weight: 500;
+            color: #444;
             cursor: pointer;
-            border-radius: 4px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             transition: all 0.2s ease;
             text-align: center;
-            word-break: break-word;
-            padding: 2px;
+            
+            /* --- CORRECTION DES MOTS COUPÉS --- */
+            padding: 4px;
             box-sizing: border-box;
-            user-select: none; /* Empêche la sélection du texte au clic */
+            user-select: none;
+            /* Permet aux phrases de passer à la ligne proprement */
+            white-space: normal; 
+            line-height: 1.2;
         }
         .bingo-cell:hover {
-            background-color: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #f8f9fa;
         }
         .bingo-cell.clicked {
-            background-color: #90caf9;
-            color: #0d47a1;
-            font-weight: 500;
+            background-color: #4facfe !important;
+            background-image: linear-gradient(to top, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            transform: scale(0.98);
         }
+
+        /* --- MESSAGE BINGO FUNKY --- */
         #bingo-message {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #2196f3;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            
+            /* Design Funky */
+            background: linear-gradient(45deg, #ff00cc, #3333ff, #ffcc00, #ff00cc);
+            background-size: 400% 400%;
             color: white;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 24px;
-            display: none;
-            z-index: 100;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 0.5s, fadeOut 0.5s 2.5s forwards;
+            padding: 30px 50px;
+            border-radius: 20px;
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            font-style: italic;
+            z-index: 1000;
             pointer-events: none;
+            
+            /* Effets de texte */
+            -webkit-text-stroke: 2px black;
+            text-shadow: 
+                4px 4px 0 #000,
+                0 0 30px rgba(255,255,255,0.8);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
-        /* Bouton pour réinitialiser si besoin */
+
+        /* Animation */
+        #bingo-message.show {
+            animation: funkyPopup 3s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+        }
+
+        @keyframes funkyPopup {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-30deg); background-position: 0% 50%; }
+            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(10deg); }
+            40% { transform: translate(-50%, -50%) scale(0.9) rotate(-5deg); background-position: 100% 50%; }
+            60% { transform: translate(-50%, -50%) scale(1.05) rotate(3deg); opacity: 1; }
+            80% { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        }
+
+        /* BOUTON RESET */
         #reset-btn {
-            margin-top: 20px;
-            padding: 10px 20px;
-            background-color: #ff7043;
-            color: white;
-            border: none;
-            border-radius: 4px;
+            margin-top: 10px;
+            padding: 12px 24px;
+            background-color: #fff;
+            color: #333;
+            border: 2px solid #ccc;
+            font-weight: 600;
+            border-radius: 30px;
             cursor: pointer;
             font-size: 14px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -60%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
+        #reset-btn:hover {
+             background-color: #333;
+             color: #fff;
+             border-color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>Bingo</h1>
-    <div id="bingo-message">Bingo !</div>
+    <h1>Bingo de Bureau</h1>
+    <div id="bingo-message">✨ BINGO ! ✨</div>
     <div id="bingo-card"></div>
     <button id="reset-btn">Nouvelle Grille</button>
 
@@ -101,7 +149,7 @@
             const bingoMessage = document.getElementById('bingo-message');
             const resetBtn = document.getElementById('reset-btn');
 
-            // J'ai changé la clé de sauvegarde pour forcer le navigateur à oublier l'ancienne grille de nombres
+            // Clés de sauvegarde
             const STORAGE_KEY_DATE = 'bingoDate_v2';
             const STORAGE_KEY_CARD = 'bingoCard_v2';
 
@@ -117,24 +165,23 @@
             function createBingoCard() {
                 bingoCard.innerHTML = '';
                 const selectedMots = [];
-                // Copie du tableau pour éviter les répétitions sans boucle infinie si liste courte
                 let tempMots = [...mots]; 
                 
                 while (selectedMots.length < 25) {
-                    if (tempMots.length === 0) tempMots = [...mots]; // Sécurité si moins de 25 mots
+                    if (tempMots.length === 0) tempMots = [...mots]; 
                     const randomIndex = Math.floor(Math.random() * tempMots.length);
                     selectedMots.push(tempMots[randomIndex]);
-                    tempMots.splice(randomIndex, 1); // Retire le mot choisi pour éviter les doublons
+                    tempMots.splice(randomIndex, 1); 
                 }
                 
                 for (let i = 0; i < 25; i++) {
                     const cell = document.createElement('div');
                     cell.className = 'bingo-cell';
                     cell.textContent = selectedMots[i];
-                    addCellEvent(cell); // Fonction séparée pour attacher l'événement
+                    addCellEvent(cell);
                     bingoCard.appendChild(cell);
                 }
-                saveBingoCard(); // Sauvegarder immédiatement la nouvelle création
+                saveBingoCard(); // <-- C'est ici que la nouvelle grille écrase l'ancienne
             }
 
             function addCellEvent(cell) {
@@ -153,7 +200,6 @@
 
                 if (savedDate === today && savedCard) {
                     bingoCard.innerHTML = savedCard;
-                    // Réattacher les événements car innerHTML ne conserve pas les listeners
                     document.querySelectorAll('.bingo-cell').forEach(cell => {
                         addCellEvent(cell);
                     });
@@ -163,54 +209,45 @@
                 }
             }
 
-            // Sauvegarder la grille actuelle
             function saveBingoCard() {
                 localStorage.setItem(STORAGE_KEY_CARD, bingoCard.innerHTML);
             }
 
-            // Bouton pour forcer une nouvelle grille
             resetBtn.addEventListener('click', function() {
                 if(confirm('Voulez-vous vraiment générer une nouvelle grille ?')) {
+                    // On vide le stockage et on recrée
                     localStorage.removeItem(STORAGE_KEY_CARD);
                     createBingoCard();
                     localStorage.setItem(STORAGE_KEY_DATE, new Date().toDateString());
                 }
             });
 
-            // Charger la grille au démarrage
             loadBingoCard();
 
-            // Vérifier si une ligne, colonne ou diagonale est complétée
+            // Vérifier victoire
             function checkWin() {
                 const cells = document.querySelectorAll('.bingo-cell');
-                
-                // Fonction utilitaire pour vérifier un groupe d'indices
                 const checkIndices = (indices) => indices.every(index => cells[index].classList.contains('clicked'));
 
-                // Vérifier les lignes
+                // Lignes
                 for (let i = 0; i < 5; i++) {
                     if (checkIndices([i*5, i*5+1, i*5+2, i*5+3, i*5+4])) { showBingoMessage(); return; }
                 }
-
-                // Vérifier les colonnes
+                // Colonnes
                 for (let i = 0; i < 5; i++) {
                     if (checkIndices([i, i+5, i+10, i+15, i+20])) { showBingoMessage(); return; }
                 }
-
-                // Vérifier les diagonales
-                // Diagonale 1 (Haut-Gauche -> Bas-Droite): 0, 6, 12, 18, 24
+                // Diagonales
                 if (checkIndices([0, 6, 12, 18, 24])) { showBingoMessage(); return; }
-
-                // Diagonale 2 (Haut-Droite -> Bas-Gauche): 4, 8, 12, 16, 20
                 if (checkIndices([4, 8, 12, 16, 20])) { showBingoMessage(); return; }
             }
 
-            // Afficher le message de victoire
+            // Message Funky
             function showBingoMessage() {
-                bingoMessage.style.display = 'block';
-                // Reset l'animation pour qu'elle puisse rejouer
-                const newOne = bingoMessage.cloneNode(true);
-                bingoMessage.parentNode.replaceChild(newOne, bingoMessage);
+                // On retire et remet la classe pour relancer l'animation si besoin
+                bingoMessage.classList.remove('show');
+                void bingoMessage.offsetWidth; // Force le reflow (astuce pour redémarrer l'anim CSS)
+                bingoMessage.classList.add('show');
             }
         });
     </script>
