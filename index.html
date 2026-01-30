@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bingo de Bureau Deluxe</title>
+    <title>Big problems</title>
     <style>
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
@@ -178,7 +178,7 @@
     <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
 </div>
 
-    <h1>✨ Bingo Bureau ✨</h1>
+    <h1>⚠️ Big Problems ⚠️</h1>
     <div id="bingo-message">BINGO !</div>
     <div id="bingo-card"></div>
     <button id="reset-btn">Nouvelle Grille</button>
@@ -278,7 +278,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const hofBtn = document.getElementById('hof-btn');
 
     const STORAGE_KEY = 'bingo_save_v1';
-    const banqueDeMots = ["ASAP", "Point", "Synergie", "Brainstorming", "Feedback", "Dans le pipe", "Agile", "N'hésite pas", "Reviens vers toi", "Cordialement", "Prioriser", "Disruptif", "Mindset", "User-friendly", "KPI", "Deadline", "Workflow", "Benchmark", "Ecosystème", "Factuel", "Micro coupé", "Hors sujet", "Valeur ajoutée", "In fine", "Scope"];
+    const banqueDeMots = ["Godwin",
+  "Les fachos",
+  "Zoophilie 😻",
+  "Rachel 👽",
+  "Pauline fait le jeu « di »",
+  "Wrong timing",
+  "Les anecdotes de Paupau",
+  "Marc",
+  "Seigneurs des anneaux 🧝",
+  "Kaamelott 👑",
+  "Sondages / Test",
+  "H word",
+  "Gaetan vient porter les clefs",
+  "Quelqu’un a du charbon sur le visage",
+  "Titre 🔞",
+  "Jeremy mange de la pizza 🍕",
+  "Marie et/ou Maela sont outrées",
+  "Jeremy oublie un truc",
+  "Aymeric nous abandonne pour insta",
+  "Chorale",
+  "Chats / Bébé 👶/🐈",
+  "Pipouille",
+  "USA",
+  "Vol de places",
+  "Quelqu’un répète un truc",
+"Jérémy rajoute du parmesan 🧀",
+"Romain parle d'IA 🤖",
+"On voit une bestiole 🐀",
+"Manu ce gros con 🕶️",
+"Boulette alimentaire 🍝",
+"Balle perdue 🔫",
+"Antoine est là !",
+"Calvitie évoquée 👴",
+"Gaëtan a une nouvelle aventure dans le train",
+"Problème de train 🚆",
+"Aurélie est pas optimiste",
+"Pauline est vielle 👵",
+"Bizutage",
+"Grossophobie",
+"Anciens cassos du labo",
+"C'est scato 💩",
+"🏰 Château-Double 🏰",
+"Quelqu'un loupe son panier 🏀"
+        ];
 
     // Créer ou Charger la grille
     function initBingo() {
