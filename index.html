@@ -77,7 +77,13 @@
         #bingo-message { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); opacity: 0; background: linear-gradient(45deg, #ff00cc, #3333ff); color: white; font-size: 3rem; font-weight: 900; padding: 20px; border-radius: 20px; z-index: 6000; pointer-events: none; }
         #bingo-message.show { animation: funkyPopup 3s forwards; }
         @keyframes funkyPopup { 0%{opacity:0;transform:translate(-50%,-50%) scale(0)} 15%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 85%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} }
-        .confetti { position: absolute; width: 10px; height: 10px; z-index: 1500; }
+        .confetti {
+            position: fixed; /* Important : fixed et non absolute */
+            width: 10px;
+            height: 10px;
+            pointer-events: none;
+            z-index: 7000;
+        }
         #admin-reset-hof { position: absolute; top: 15px; right: 15px; background: #ffebee; color: #d32f2f; border: none; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
     </style>
 </head>
@@ -108,7 +114,7 @@
 
     <h1>⚠️ Big Problems ⚠️</h1>
     
-    <div id="bingo-message">BINGO !</div>
+    <div id="bingo-message">BINGO!</div>
     <div id="bingo-card"></div>
     <button id="reset-btn">Nouvelle Grille</button>
 
@@ -176,18 +182,47 @@
         function createBingoCard() {
             const card = document.getElementById('bingo-card');
             card.innerHTML = '';
+            
+            // 1. Tes variantes de cases cadeaux
+            const bonusTexts = [
+                "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
+                "🎁", "P'tit bonus",
+                "C'est bien parce que c'est toi", "Julian c'est grave un boss, nan ?"
+            ];
+        
+            // 2. Filtrer selon les présents
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
             
+            // 3. Marquer les cases originales comme non-cadeaux
+            filtrés = filtrés.map(item => ({ ...item, isGift: false }));
+        
+            // 4. Compléter si < 25 avec des cases cadeaux
+            if (filtrés.length < 25) {
+                const manquant = 25 - filtrés.length;
+                for (let i = 0; i < manquant; i++) {
+                    const randomText = bonusTexts[Math.floor(Math.random() * bonusTexts.length)];
+                    filtrés.push({ p: randomText, owner: null, isGift: true });
+                }
+            }
+            
+            // 5. Mélange Fisher-Yates
             for (let i = filtrés.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [filtrés[i], filtrés[j]] = [filtrés[j], filtrés[i]];
             }
-
+        
+            // 6. Génération HTML avec auto-clic pour les cadeaux
             filtrés.slice(0, 25).forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
+                
+                // --- LA MAGIE EST ICI ---
+                if (item.isGift) {
+                    cell.classList.add('clicked');
+                }
+        
                 cell.onclick = function() {
                     this.classList.toggle('clicked');
                     localStorage.setItem(STORAGE_KEY, card.innerHTML);
@@ -195,7 +230,11 @@
                 };
                 card.appendChild(cell);
             });
+        
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
+            
+            // On vérifie tout de suite si les cases cadeaux donnent déjà un Bingo !
+            checkWin(); 
         }
 
         function checkWin() {
@@ -220,13 +259,30 @@
         }
 
         function triggerConfetti() {
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 100; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
-                c.style.left = Math.random() * 100 + 'vw';
+                
+                // --- POSITION ET COULEUR ---
+                const startX = Math.random() * 100; // Position horizontale (0 à 100vw)
+                const startY = Math.random() * -20; // Commence un peu au-dessus de l'écran
+                c.style.left = startX + 'vw';
+                c.style.top = startY + 'vh';
                 c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                
                 document.body.appendChild(c);
-                c.animate([{transform:'translateY(0)',opacity:1},{transform:'translateY(100vh)',opacity:0}], 2000).onfinish = () => c.remove();
+        
+                // --- ANIMATION ÉPARPILLÉE ---
+                const duration = 2000 + Math.random() * 3000;
+                const drift = (Math.random() - 0.5) * 20; // Dérive latérale (gauche/droite)
+        
+                c.animate([
+                    { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate(${drift}vw, 105vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                ], {
+                    duration: duration,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }).onfinish = () => c.remove();
             }
         }
 
