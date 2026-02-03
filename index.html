@@ -5,16 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big problems</title>
     <style>
-        #presence-settings {
-            background: #fff;
-            border: 2px solid #ddd;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: 450px;
-            box-sizing: border-box;
-        }
+    /* --- Animation du Panneau de Présence --- */
+    #presence-settings {
+        background: #fff;
+        border: 2px solid #ddd;
+        border-radius: 12px;
+        padding: 15px;
+        width: 100%;
+        max-width: 450px;
+        box-sizing: border-box;
+        
+        /* Animation de glissement */
+        position: fixed;
+        top: -100%; /* Caché au-dessus de l'écran */
+        left: 50%;
+        transform: translateX(-50%);
+        transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 4000;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    
+    /* Bouton Présence (Gauche) */
+    #presence-toggle-btn { 
+        position: absolute; 
+        top: 15px; 
+        left: 15px; 
+        background: white; 
+        border: none; 
+        border-radius: 50%; 
+        width: 45px; 
+        height: 45px; 
+        font-size: 1.2rem; 
+        cursor: pointer; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        z-index: 100; 
+    }
+    
+    /* Classe pour afficher quand c'est actif */
+    #presence-settings.visible {
+        top: 20px; /* Glisse vers le bas */
+    }
+
+    /* Overlay sombre derrière le panneau de présence */
+    #presence-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        z-index: 3500;
+    }
+    
+    #presence-overlay.visible {
+        display: block;
+    }
+        
         .check-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr); /* 3 colonnes pour gagner de la place */
@@ -131,18 +175,39 @@
         }
 
         /* --- UI HALL OF FAME --- */
-        #hof-btn { position: absolute; top: 15px; right: 15px; background: white; border: none; border-radius: 50%; width: 45px; height: 45px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; }
+        /* Bouton Hall of Fame (Droite) */
+    #hof-btn { 
+        position: absolute; 
+        top: 15px; 
+        right: 15px; 
+        background: white; 
+        border: none; 
+        border-radius: 50%; 
+        width: 45px; 
+        height: 45px; 
+        font-size: 1.5rem; 
+        cursor: pointer; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        z-index: 100; 
+    }        
         
-        #hof-panel { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(255,255,255,0.98); 
-            z-index: 3000; 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            padding-top: 50px; 
-        }
+       /* --- Animation du Hall of Fame --- */
+    #hof-panel { 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(255,255,255,0.98); 
+        z-index: 5000; 
+        display: flex; /* Toujours en flex pour l'alignement */
+        flex-direction: column; 
+        align-items: center; 
+        padding-top: 50px;
+        
+        /* État caché par défaut */
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(1.1);
+        transition: all 0.3s ease-out;
+    }
 
         #admin-reset-hof {
             position: absolute;
@@ -165,7 +230,11 @@
             color: white;
         }
 
-        #hof-panel.active { display: flex; }
+        #hof-panel.active { 
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+    }
         .hof-list { width: 85%; max-width: 350px; margin-top: 20px; }
         .hof-item { background: white; padding: 12px; margin-bottom: 8px; border-radius: 8px; display: flex; justify-content: space-between; border: 1px solid #eee; font-weight: 600; align-items: center; }
         
@@ -195,15 +264,32 @@
     </style>
 </head>
 <body>
+<div id="presence-overlay" onclick="togglePresencePanel()"></div>
+    
+<button id="presence-toggle-btn" title="Gérer les présences">👥</button>
+    
+<button id="hof-btn" onclick="openHOF()">🏆</button>
 
-    <button id="hof-btn">🏆</button>
-
-    <div id="hof-panel">
+<div id="hof-panel">
     <button id="admin-reset-hof">Réinitialiser la saison</button>
     <h2>🏆 Podium des Champions 🏆</h2>
     <div class="hof-list" id="hof-content">Chargement...</div>
-    <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
+    <button onclick="closeHOF()" style="margin-top:20px;">Fermer</button>
 </div>
+
+<button id="presence-toggle-btn" onclick="togglePresencePanel()">👥</button>
+    
+<button id="presence-toggle-btn" title="Gérer les présences">👥</button>
+
+<div id="presence-settings">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <strong style="font-size: 0.9rem;">👥 Qui est là ?</strong>
+        <button onclick="togglePresencePanel()" style="border:none; background:none; cursor:pointer;">✖️</button>
+    </div>
+    <div id="check-list" class="check-grid"></div>
+    <p style="font-size: 0.7rem; color: #666; margin-top: 10px;">⚠️ Modifiez puis cliquez sur "Nouvelle Grille".</p>
+</div>
+    
 <div id="presence-settings" style="background: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
     <strong>Qui est là aujourd'hui ?</strong><br>
     <div id="check-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px;">
@@ -218,6 +304,28 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
+    // --- FONCTIONS DE NAVIGATION ---
+    function togglePresencePanel() {
+        const panel = document.getElementById('presence-settings');
+        const overlay = document.getElementById('presence-overlay');
+        panel.classList.toggle('visible');
+        overlay.classList.toggle('visible');
+        document.body.style.overflow = panel.classList.contains('visible') ? 'hidden' : 'auto';
+    }
+    
+    function openHOF() {
+        document.getElementById('hof-panel').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeHOF() {
+        document.getElementById('hof-panel').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Dans ton DOMContentLoaded, ajoute l'événement sur le bouton :
+    document.getElementById('presence-toggle-btn').onclick = togglePresencePanel;
+        
     const staff = ["Aymeric", "Pauline", "Jeremy", "Aurelie", "Alex"];
         
     function renderPresenceList() {
@@ -391,7 +499,15 @@ document.addEventListener('DOMContentLoaded', function() {
         { p: "Premier degré", owner: null }
     ];
 
-    renderPresenceList(); // Affiche les cases à cocher
+        // 1. On affiche la liste des gens (tes cases à cocher)
+        renderPresenceList(); 
+        
+        // 2. On lance la logique de la base de données
+        listenToHOF(); 
+        
+        // 3. On initialise la grille (charge la sauvegarde ou en crée une)
+        initBingo(); 
+    });
     
     // Créer ou Charger la grille
     function initBingo() {
@@ -415,12 +531,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 2. Filtrer la banque de mots
         const motsFiltrés = banqueDeMots.filter(item => {
-            if (!item.owner) return true; // Case commune
-            return presents.includes(item.owner); // Case liée à un présent
+            if (!item.owner) return true; 
+            return presents.includes(item.owner);
         });
     
-        // 3. Sécurité : Mélange et sélection
-        const selected = [...motsFiltrés].sort(() => 0.5 - Math.random()).slice(0, 25);
+        // 3. Algorithme de mélange robuste (Fisher-Yates)
+        for (let i = motsFiltrés.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [motsFiltrés[i], motsFiltrés[j]] = [motsFiltrés[j], motsFiltrés[i]];
+        }
+    
+        // 4. Sélection des 25 premières cases après le gros mélange
+        const selected = motsFiltrés.slice(0, 25);
         
         selected.forEach(item => {
             const cell = document.createElement('div');
@@ -429,6 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cell.onclick = toggleCell;
             bingoCard.appendChild(cell);
         });
+        
         saveLocal();
     }
 
