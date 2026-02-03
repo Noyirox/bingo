@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big problems</title>
     <style>
+        #presence-settings {
+            background: #fff;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+        .check-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 colonnes pour gagner de la place */
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .check-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            cursor: pointer;
+            background: #f9f9f9;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .check-item input { margin-right: 5px; }
+        
         body {
             font-family: 'Segoe UI', Roboto, sans-serif;
             display: flex;
@@ -177,7 +204,11 @@
     <div class="hof-list" id="hof-content">Chargement...</div>
     <button onclick="document.getElementById('hof-panel').classList.remove('active')" style="margin-top:20px;">Fermer</button>
 </div>
-
+<div id="presence-settings" style="background: white; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.8rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+    <strong>Qui est là aujourd'hui ?</strong><br>
+    <div id="check-list" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px;">
+        </div>
+</div>
     <h1>⚠️ Big Problems ⚠️</h1>
     <div id="bingo-message">BINGO !</div>
     <div id="bingo-card"></div>
@@ -187,6 +218,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
+    const staff = ["Aymeric", "Pauline", "Jeremy", "Aurelie", "Alex"];
+        
+    function renderPresenceList() {
+        const container = document.getElementById('check-list');
+        container.innerHTML = staff.map(name => `
+            <label class="check-item">
+                <input type="checkbox" class="presence-check" value="${name}" checked>
+                ${name}
+            </label>
+        `).join('');
+    }
+        
 function formatName(str) {
     return str.toLowerCase().replace(/(^|[\s-])\S/g, function (match) {
         return match.toUpperCase();
@@ -262,14 +305,14 @@ function listenToHOF() {
 
     // Activation du bouton Reset (Saison)
     const resetHofBtn = document.getElementById('admin-reset-hof');
-    if(resetHofBtn) {
-        resetHofBtn.onclick = () => {
-            if(confirm("Effacer tous les scores et recommencer la saison ?")) {
-                database.ref('winners').remove();
-            }
-        };
+        if(resetHofBtn) {
+            resetHofBtn.onclick = () => {
+                if(confirm("Effacer tous les scores et recommencer la saison ?")) {
+                    database.ref('winners').remove();
+                }
+            };
+        }
     }
-}
         // 3. LOGIQUE JEU
 document.addEventListener('DOMContentLoaded', function() {
     const bingoCard = document.getElementById('bingo-card');
@@ -278,64 +321,78 @@ document.addEventListener('DOMContentLoaded', function() {
     const hofBtn = document.getElementById('hof-btn');
 
     const STORAGE_KEY = 'bingo_save_v1';
-    const banqueDeMots = ["Godwin",
-  "Les fachos",
-  "Zoophilie 😻",
-  "Rachel 👽",
-  "Pauline fait le jeu « di »",
-  "Wrong timing",
-  "Les anecdotes de Paupau",
-  "Marc",
-  "Seigneurs des anneaux 🧝",
-  "Kaamelott 👑",
-  "Sondages / Test",
-  "H word",
-  "Gaetan vient porter les clefs",
-  "Quelqu’un a du charbon sur le visage",
-  "Titre 🔞",
-  "Jeremy mange de la pizza 🍕",
-  "Marie et/ou Maela sont outrées",
-  "Jeremy oublie un truc",
-  "Aymeric nous abandonne pour insta",
-  "Chorale",
-  "Chats / Bébé 👶/🐈",
-  "Pipouille",
-  "USA 🇺🇲",
-  "Vol de places",
-  "Quelqu’un répète un truc",
-"Jérémy rajoute du parmesan 🧀",
-"Romain parle d'IA 🤖",
-"On voit une bestiole 🐀",
-"Manu ce gros con 🕶️",
-"Boulette alimentaire 🍝",
-"Balle perdue 🔫",
-"Antoine est là !",
-"Calvitie évoquée 👴",
-"Gaëtan a une nouvelle aventure dans le train",
-"Problème de train 🚆",
-"Aurélie est pas optimiste",
-"Pauline est vieille 👵",
-"Bizutage",
-"Grosso phobie",
-"Anciens cassos du labo",
-"C'est scato 💩",
-"🏰 Château-Double 🏰",
-"Quelqu'un loupe son panier 🏀",
-"T le maudit",
-"Les Zommes ♂️",
-"Caillou 🗿",
-"Aurélie s'est levé tôt 🌅",
-"Point cuisine 🍲",
-"Aurélie l'ogre 👹",
-"Expression inventée",
-"Problème de famille d'Alex",
-"Pedro Pascal",
-"Marseillais 🤬🏍️🩵🤍",
-"Marie met plusieurs couches de sel 🧂",
-"Premier degré",
-"Pauline force le bingo",
-        ];
+    const banqueDeMots = [
+        // AYMERIC
+        { p: "Zoophilie 😻", owner: "Aymeric" },
+        { p: "Rachel 👽", owner: "Aymeric" },
+        { p: "H word", owner: "Aymeric" },
+        { p: "Gaetan vient porter les clefs", owner: "Aymeric" },
+        { p: "Aymeric nous abandonne pour insta", owner: "Aymeric" },
+        { p: "Gaëtan a une nouvelle aventure dans le train", owner: "Aymeric" },
+        { p: "Bizutage", owner: "Aymeric" },
+        { p: "Grosso phobie", owner: "Aymeric" },
+    
+        // PAULINE
+        { p: "Pauline fait le jeu « di »", owner: "Pauline" },
+        { p: "Les anecdotes de Paupau", owner: "Pauline" },
+        { p: "Kaamelott 👑", owner: "Pauline" },
+        { p: "Pauline est vieille 👵", owner: "Pauline" },
+        { p: "Pauline force le bingo", owner: "Pauline" },
+        { p: "🏰 Château-Double 🏰", owner: "Pauline" },
+    
+        // JÉRÉMY
+        { p: "Jeremy mange de la pizza 🍕", owner: "Jeremy" },
+        { p: "Jeremy oublie un truc", owner: "Jeremy" },
+        { p: "Jérémy rajoute du parmesan 🧀", owner: "Jeremy" },
+    
+        // AURÉLIE
+        { p: "Aurélie est pas optimiste", owner: "Aurelie" },
+        { p: "Aurélie s'est levé tôt 🌅", owner: "Aurelie" },
+        { p: "Aurélie l'ogre 👹", owner: "Aurelie" },
+    
+        // ALEX
+        { p: "Problème de famille d'Alex", owner: "Alex" },
+        { p: "Pedro Pascal", owner: "Alex" },
+    
+        // CASES COMMUNES (Owner null)
+        { p: "Godwin", owner: null },
+        { p: "Les fachos", owner: null },
+        { p: "Wrong timing", owner: null },
+        { p: "Marc", owner: null },
+        { p: "Seigneurs des anneaux 🧝", owner: null },
+        { p: "Sondages / Test", owner: null },
+        { p: "Quelqu’un a du charbon sur le visage", owner: null },
+        { p: "Titre 🔞", owner: null },
+        { p: "Marie et/ou Maela sont outrées", owner: null },
+        { p: "Chorale", owner: null },
+        { p: "Chats / Bébé 👶/🐈", owner: null },
+        { p: "Pipouille", owner: null },
+        { p: "USA 🇺🇲", owner: null },
+        { p: "Vol de places", owner: null },
+        { p: "Quelqu’un répète un truc", owner: null },
+        { p: "Romain parle d'IA 🤖", owner: null },
+        { p: "On voit une bestiole 🐀", owner: null },
+        { p: "Manu ce gros con 🕶️", owner: null },
+        { p: "Boulette alimentaire 🍝", owner: null },
+        { p: "Balle perdue 🔫", owner: null },
+        { p: "Antoine est là !", owner: null },
+        { p: "Calvitie évoquée 👴", owner: null },
+        { p: "Problème de train 🚆", owner: null },
+        { p: "Anciens cassos du labo", owner: null },
+        { p: "C'est scato 💩", owner: null },
+        { p: "Quelqu'un loupe son panier 🏀", owner: null },
+        { p: "T le maudit", owner: null },
+        { p: "Les Zommes ♂️", owner: null },
+        { p: "Caillou 🗿", owner: null },
+        { p: "Point cuisine 🍲", owner: null },
+        { p: "Expression inventée", owner: null },
+        { p: "Marseillais 🤬🏍️🩵🤍", owner: null },
+        { p: "Marie met plusieurs couches de sel 🧂", owner: null },
+        { p: "Premier degré", owner: null }
+    ];
 
+    renderPresenceList(); // Affiche les cases à cocher
+    
     // Créer ou Charger la grille
     function initBingo() {
         const saved = localStorage.getItem(STORAGE_KEY);
@@ -352,11 +409,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function createBingoCard() {
         bingoCard.innerHTML = '';
-        const selected = [...banqueDeMots].sort(() => 0.5 - Math.random()).slice(0, 25);
-        selected.forEach(mot => {
+        
+        // 1. Récupérer les personnes cochées
+        const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
+        
+        // 2. Filtrer la banque de mots
+        const motsFiltrés = banqueDeMots.filter(item => {
+            if (!item.owner) return true; // Case commune
+            return presents.includes(item.owner); // Case liée à un présent
+        });
+    
+        // 3. Sécurité : Mélange et sélection
+        const selected = [...motsFiltrés].sort(() => 0.5 - Math.random()).slice(0, 25);
+        
+        selected.forEach(item => {
             const cell = document.createElement('div');
             cell.className = 'bingo-cell';
-            cell.textContent = mot;
+            cell.textContent = item.p;
             cell.onclick = toggleCell;
             bingoCard.appendChild(cell);
         });
