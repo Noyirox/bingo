@@ -94,7 +94,19 @@
         #reset-btn { margin-top: 20px; padding: 12px 25px; border: none; background: #333; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; }
         #hof-panel { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; padding-top: 50px; opacity: 0; pointer-events: none; transform: scale(1.1); transition: 0.3s; }
         #hof-panel.active { opacity: 1; pointer-events: auto; transform: scale(1); }
-        .hof-item { background: #f9f9f9; padding: 10px; margin: 5px; width: 80%; border-radius: 8px; display: flex; justify-content: space-between; }
+        .hof-item { 
+            background: #f9f9f9; 
+            padding: 12px 20px; /* Plus d'espace interne */
+            margin: 8px 0; 
+            width: 90%; /* On occupe plus de place en largeur */
+            max-width: 400px;
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; /* Aligne verticalement le nom et le score */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Un petit relief pour le style */
+            box-sizing: border-box; /* Important pour que le padding ne dépasse pas */
+        }
         #bingo-message { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); opacity: 0; background: linear-gradient(45deg, #ff00cc, #3333ff); color: white; font-size: 3rem; font-weight: 900; padding: 20px; border-radius: 20px; z-index: 6000; pointer-events: none; }
         #bingo-message.show { animation: funkyPopup 3s forwards; }
         @keyframes funkyPopup { 0%{opacity:0;transform:translate(-50%,-50%) scale(0)} 15%{opacity:1;transform:translate(-50%,-50%) scale(1.1)} 85%{opacity:1;transform:translate(-50%,-50%) scale(1)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} }
@@ -407,13 +419,20 @@
                 const scores = {};
                 Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
                 const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
-                content.innerHTML = ranking.map((w, i) => `
+                content.innerHTML = ranking.map((w, i) => {
+                const medal = i == 0 ? '🥇 ' : i == 1 ? '🥈 ' : i == 2 ? '🥉 ' : '👤 ';
+                return `
                     <div class="hof-item">
-                        <span>${i==0?'🥇 ':i==1?'🥈 ':i==2?'🥉 ':''}${w.name}</span>
-                        <span>${w.count} victoire${w.count > 1 ? 's' : ''}</span>
+                        <span style="font-weight: bold; font-size: 1.1rem; color: #333;">
+                            ${medal}${w.name}
+                        </span>
+                        <span style="color: #666; font-size: 0.9rem; text-align: right;">
+                            ${w.count} victoire${w.count > 1 ? 's' : ''}
+                        </span>
                     </div>
-                `).join('');
-            });
+                `;
+            }).join('');
+        });
 
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
