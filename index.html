@@ -288,27 +288,54 @@
             const isClicked = i => cells[i].classList.contains('clicked');
             const wins = [[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],[0,6,12,18,24],[4,8,12,16,20]];
             
-            if (wins.some(c => c.every(isClicked))) {
+            // On cherche si une ligne gagnante existe
+            const winningCombo = wins.find(c => c.every(isClicked));
+        
+            if (winningCombo) {
                 const msg = document.getElementById('bingo-message');
                 if (msg.classList.contains('show')) return;
                 
+                // --- DETECTION EASTER EGG ---
+                // On vérifie si TOUTES les cases de la combinaison gagnante sont des bonus
+                // Dans ton code, les bonus n'ont pas la clé .owner ou sont marqués isGift
+                const isFullLuck = winningCombo.every(index => {
+                    const txt = cells[index].textContent;
+                    return !banqueDeMots.some(m => m.p === txt); 
+                });
+        
+                if (isFullLuck) {
+                    msg.innerHTML = "🍀 L'ÉLU·E 🍀";
+                    msg.style.background = "linear-gradient(45deg, #00FF87, #60EFFF)";
+                } else {
+                    msg.innerHTML = "BINGO !";
+                    msg.style.background = "linear-gradient(45deg, #ff00cc, #3333ff)";
+                }
+                // ----------------------------
+        
                 msg.classList.add('show');
                 triggerConfetti();
         
                 setTimeout(() => {
-                    let name = prompt("BINGO ! Ton nom :");
+                    let name = prompt(isFullLuck ? "Incroyable ! 5 cases bonus alignées ! Quel est ton nom, Élu·e :" : "BINGO ! Ton nom :");
                     if (name) {
                         const cleanName = formatName(name.trim());
                         const now = Date.now();
                         const sessionID = "S_" + Math.random().toString(36).substr(2, 9);
                         
-                        database.ref('winners').push({ name: cleanName, timestamp: now });
+                        // Si c'est un coup de chance, on ajoute un suffixe au nom pour le podium
+                        const displayName = isFullLuck ? `${cleanName} 🍀` : cleanName;
         
-                        // On envoie le signal avec l'ID de session
-                        database.ref('bingo_signal').set({
-                            winner: cleanName,
+                        database.ref('winners').push({ 
+                            name: displayName, 
                             timestamp: now,
-                            sessionID: sessionID
+                            lucky: isFullLuck // On garde l'info en base au cas où
+                        });
+        
+                        database.ref('bingo_signal').set({
+                            winner: displayName,
+                            timestamp: now,
+                            sessionID: sessionID,
+                            isLucky: isFullLuck
                         });
                     }
                     msg.classList.remove('show');
@@ -351,18 +378,21 @@
             }
         }
         
-        function showWinnerAlert(winnerName) {
+        function showWinnerAlert(winnerName, isLucky) {
             const alertBox = document.createElement('div');
-            alertBox.style = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:15px 25px; border-radius:50px; z-index:9999; border:2px solid #FFD700; font-weight:bold; box-shadow:0 10px 30px rgba(0,0,0,0.5);";
-            alertBox.innerHTML = `🏆 ${winnerName} a eu un BINGO !`;
-            document.body.appendChild(alertBox);
+            const color = isLucky ? "#00FF87" : "#FFD700";
+            const text = isLucky ? `🍀 INCROYABLE : ${winnerName} a gagné sans rien faire !` : `🏆 ${winnerName} a eu un BINGO !`;
             
-            // Animation de sortie
+            alertBox.style = `position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:15px 25px; border-radius:50px; z-index:9999; border:3px solid ${color}; font-weight:bold; box-shadow:0 10px 30px rgba(0,0,0,0.5); white-space:nowrap;`;
+            alertBox.innerHTML = text;
+            
+            document.body.appendChild(alertBox);
             setTimeout(() => {
-                alertBox.style.transition = "opacity 0.5s";
+                alertBox.style.transition = "all 0.5s";
                 alertBox.style.opacity = "0";
+                alertBox.style.top = "0px";
                 setTimeout(() => alertBox.remove(), 500);
-            }, 5000);
+            }, 6000);
         }
         
         // 4. INIT
@@ -377,7 +407,12 @@
                 const scores = {};
                 Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
                 const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
-                content.innerHTML = ranking.map((w, i) => `<div class="hof-item"><span>${i==0?'🥇 ':i==1?'🥈 ':i==2?'🥉 ':''}${w.name}</span><span>${w.count} victoires</span></div>`).join('');
+                content.innerHTML = ranking.map((w, i) => `
+                    <div class="hof-item">
+                        <span>${i==0?'🥇 ':i==1?'🥈 ':i==2?'🥉 ':''}${w.name}</span>
+                        <span>${w.count} victoire${w.count > 1 ? 's' : ''}</span>
+                    </div>
+                `).join('');
             });
 
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -404,18 +439,21 @@
             if (data.sessionID === lastID) return;
             localStorage.setItem('processed_bingo', data.sessionID);
         
-            // 1. Alerte visuelle
-            showWinnerAlert(data.winner); // Ta fonction d'alerte
+        // 1. Alerte visuelle
+        showWinnerAlert(data.winner); // Ta fonction d'alerte
         
-            // 2. RECENSEMENT : Chaque joueur envoie ses cases cochées pour CETTE session
-            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-                const phrase = cell.textContent;
+        // 2. RECENSEMENT : Chaque joueur envoie ses cases cochées pour CETTE session
+        document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+            const phrase = cell.textContent;
+            
+            // VERIFICATION : On ne compte la case que si elle fait partie de la banque officielle
+            const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
+            
+            if (existeDansBanque) {
                 const safeKey = safeEncode(phrase);
-                
-                // On marque la case comme "vue" pour cette session précise
-                // Si 10 personnes le font, ça écrase juste la valeur 'true' au même endroit
                 database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
-            });
+            }
+        });
         });
         
         // B. Afficher l'intégralité des Statistiques basées sur les sessions uniques
