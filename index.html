@@ -105,14 +105,16 @@
     <div id="hof-panel">
         <button id="admin-reset-hof" onclick="resetHof()">Réinitialiser la saison</button>
         <h2>🏆 Podium des Champions 🏆</h2>
-        <div id="hof-content" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+        <div id="hof-content"></div>
+    
+        <hr style="width:80%; margin:20px 0; opacity:0.2;">
+        <h3>🔥 Top Cases (Toute la saison)</h3>
+        <div id="stats-content" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+            </div>
+    
         <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px;">Fermer</button>
     </div>
-    <hr style="width:80%; margin:20px 0; opacity:0.2;">
-    <h3>🔥 Top Cases (Toute la saison)</h3>
-    <div id="stats-content" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
-        </div>
-
+    
     <button id="presence-toggle-btn" onclick="togglePresencePanel()">👥</button>
     <button id="hof-btn" onclick="openHOF()">🏆</button>
 
@@ -126,6 +128,24 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
+        function formatName(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/(^|[\s-])\S/g, match => match.toUpperCase());
+        }
+
+        function safeEncode(str) {
+            return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+                return String.fromCharCode('0x' + p1);
+            }));
+        }
+
+        function safeDecode(str) {
+            try {
+                return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch(e) { return atob(str); } // Repli si l'ancien format est encore là
+        }
         // 1. CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCoj07_H212qNd1oe_-mUdZrjrYh0Js4fA", 
@@ -187,42 +207,46 @@
             const card = document.getElementById('bingo-card');
             card.innerHTML = '';
             
-            // 1. Tes variantes de cases cadeaux
-            const bonusTexts = [
+        // 1. Liste des bonus disponibles
+            let bonusPool = [
                 "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
                 "🎁", "P'tit bonus",
-                "C'est bien parce que c'est toi", "Julian c'est grave un boss, nan ?"
+                "C'est bien parce que c'est toi", "Julian c'est grave un boss, nan ?",
+                "On remercie les absents", "Parce que tu es là"
             ];
         
-            // 2. Filtrer selon les présents
+            // Mélange initial du pool de bonus pour le tirage sans remise
+            bonusPool.sort(() => Math.random() - 0.5);
+        
+            // 2. Filtrage des mots selon les présents
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
             
-            // 3. Marquer les cases originales comme non-cadeaux
+            // On marque les vraies cases
             filtrés = filtrés.map(item => ({ ...item, isGift: false }));
         
-            // 4. Compléter si < 25 avec des cases cadeaux
+            // 3. Compléter si < 25 (Tirage sans remise)
             if (filtrés.length < 25) {
                 const manquant = 25 - filtrés.length;
                 for (let i = 0; i < manquant; i++) {
-                    const randomText = bonusTexts[Math.floor(Math.random() * bonusTexts.length)];
-                    filtrés.push({ p: randomText, owner: null, isGift: true });
+                    // On prend le i-ème élément du pool mélangé
+                    const text = bonusPool[i] || "Case libre ✨"; 
+                    filtrés.push({ p: text, owner: null, isGift: true });
                 }
             }
             
-            // 5. Mélange Fisher-Yates
+            // 4. Mélange final Fisher-Yates pour la grille
             for (let i = filtrés.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [filtrés[i], filtrés[j]] = [filtrés[j], filtrés[i]];
             }
         
-            // 6. Génération HTML avec auto-clic pour les cadeaux
+            // 5. Génération HTML
             filtrés.slice(0, 25).forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
                 
-                // --- LA MAGIE EST ICI ---
                 if (item.isGift) {
                     cell.classList.add('clicked');
                 }
@@ -236,8 +260,6 @@
             });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
-            
-            // On vérifie tout de suite si les cases cadeaux donnent déjà un Bingo !
             checkWin(); 
         }
 
@@ -254,12 +276,11 @@
                 triggerConfetti();
         
                 setTimeout(() => {
-                    let name = prompt("BINGO ! Ton nom :");
+                let name = prompt("BINGO ! Ton nom :");
                     if (name) {
-                        const cleanName = name.trim().toUpperCase();
+                        const cleanName = formatName(name.trim()); // Utilisation de la fonction magique
                         const now = Date.now();
                         
-                        // 1. On enregistre le gagnant
                         database.ref('winners').push({ name: cleanName, timestamp: now });
                         
                         // 2. On envoie le SIGNAL qui déclenche le recensement chez tout le monde
@@ -351,14 +372,13 @@
             document.body.appendChild(alertBox);
             setTimeout(() => alertBox.remove(), 6000);
         
-            // 2. RECENSEMENT : Envoyer ses propres cases cochées aux stats
-            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-                const phrase = cell.textContent;
-                // Encodage Base64 pour éviter les caractères interdits par Firebase
-                const safeKey = btoa(unescape(encodeURIComponent(phrase)));
-                database.ref('stats/' + safeKey).transaction(count => (count || 0) + 1);
-            });
+        // 2. RECENSEMENT : Envoyer ses propres cases cochées aux stats
+        document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+            const phrase = cell.textContent;
+            const safeKey = safeEncode(phrase); 
+            database.ref('stats/' + safeKey).transaction(count => (count || 0) + 1);
         });
+    });
         
         // B. Afficher les Statistiques dans le Hall of Fame
         database.ref('stats').on('value', (snap) => {
@@ -367,14 +387,14 @@
             if (!statsData || !container) return;
         
             const sorted = Object.keys(statsData)
-                .map(key => ({ txt: atob(key), val: statsData[key] }))
+                .map(key => ({ txt: safeDecode(key), val: statsData[key] }))
                 .sort((a, b) => b.val - a.val)
-                .slice(0, 8); // On affiche le top 8
+                .slice(0, 8); 
         
             container.innerHTML = sorted.map(s => `
-                <div class="hof-item" style="font-size:0.8rem; background:rgba(0,0,0,0.03)">
-                    <span style="flex:1; text-align:left;">${s.txt}</span>
-                    <span style="background:#4CAF50; color:white; padding:2px 8px; border-radius:10px;">${s.val}</span>
+                <div class="hof-item" style="font-size:0.85rem; background:rgba(0,0,0,0.03); width: 90%; align-self: center;">
+                    <span style="flex:1; text-align:left; padding-right:10px;">${s.txt}</span>
+                    <span style="background:#4CAF50; color:white; padding:2px 10px; border-radius:15px; font-weight:bold;">${s.val}</span>
                 </div>
             `).join('');
         });
