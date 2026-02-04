@@ -297,18 +297,19 @@
                 triggerConfetti();
         
                 setTimeout(() => {
-                let name = prompt("BINGO ! Ton nom :");
+                    let name = prompt("BINGO ! Ton nom :");
                     if (name) {
-                        const cleanName = formatName(name.trim()); // Utilisation de la fonction magique
+                        const cleanName = formatName(name.trim());
                         const now = Date.now();
+                        const sessionID = "S_" + Math.random().toString(36).substr(2, 9);
                         
                         database.ref('winners').push({ name: cleanName, timestamp: now });
-                        
-                        // 2. On envoie le SIGNAL qui déclenche le recensement chez tout le monde
+        
+                        // On envoie le signal avec l'ID de session
                         database.ref('bingo_signal').set({
                             winner: cleanName,
                             timestamp: now,
-                            sessionID: "S_" + Math.random().toString(36).substr(2, 9)
+                            sessionID: sessionID
                         });
                     }
                     msg.classList.remove('show');
@@ -381,49 +382,56 @@
             const data = snapshot.val();
             if (!data) return;
         
-            // Éviter de traiter deux fois le même signal
             const lastID = localStorage.getItem('processed_bingo');
             if (data.sessionID === lastID) return;
             localStorage.setItem('processed_bingo', data.sessionID);
         
-            // 1. Alerte visuelle pour tout le monde
-            const alertBox = document.createElement('div');
-            alertBox.style = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:15px 25px; border-radius:50px; z-index:9999; border:2px solid #FFD700; font-weight:bold; box-shadow:0 10px 30px rgba(0,0,0,0.5); animation:slideDown 0.5s ease-out;";
-            alertBox.innerHTML = `🏆 ${data.winner} a fait BINGO !`;
-            document.body.appendChild(alertBox);
-            setTimeout(() => alertBox.remove(), 6000);
+            // 1. Alerte visuelle
+            showWinnerAlert(data.winner); // Ta fonction d'alerte
         
-        // 2. RECENSEMENT : Envoyer ses propres cases cochées aux stats
-        document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-            const phrase = cell.textContent;
-            const safeKey = safeEncode(phrase); 
-            database.ref('stats/' + safeKey).transaction(count => (count || 0) + 1);
+            // 2. RECENSEMENT : Chaque joueur envoie ses cases cochées pour CETTE session
+            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+                const phrase = cell.textContent;
+                const safeKey = safeEncode(phrase);
+                
+                // On marque la case comme "vue" pour cette session précise
+                // Si 10 personnes le font, ça écrase juste la valeur 'true' au même endroit
+                database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
+            });
         });
-    });
         
-        // B. Afficher l'intégralité des Statistiques dans le Hall of Fame
-        database.ref('stats').on('value', (snap) => {
-            const statsData = snap.val() || {}; 
+        // B. Afficher l'intégralité des Statistiques basées sur les sessions uniques
+        database.ref('session_votes').on('value', (snap) => {
+            const allSessions = snap.val() || {};
             const container = document.getElementById('stats-content');
             if (!container) return;
         
-            // 1. On croise la banque de mots avec les données de la DB
+            // 1. On calcule les totaux en comptant la présence de la clé dans chaque session
+            const globalCounts = {};
+            Object.values(allSessions).forEach(sessionCases => {
+                // sessionCases contient toutes les safeKeys cochées lors d'une partie
+                Object.keys(sessionCases).forEach(safeKey => {
+                    globalCounts[safeKey] = (globalCounts[safeKey] || 0) + 1;
+                });
+            });
+        
+            // 2. On croise la banque de mots avec nos calculs de sessions
             const allStats = banqueDeMots.map(item => {
                 const phrase = item.p;
-                const safeKey = safeEncode(phrase); // Utilise la fonction safeEncode définie plus haut
+                const safeKey = safeEncode(phrase); // Utilise ta fonction de formatage d'accent
                 return {
                     txt: phrase,
-                    val: statsData[safeKey] || 0
+                    val: globalCounts[safeKey] || 0
                 };
             });
         
-            // 2. Tri : d'abord le score (décroissant), puis alphabétique
+            // 3. Tri : d'abord le score (décroissant), puis alphabétique
             allStats.sort((a, b) => {
                 if (b.val !== a.val) return b.val - a.val;
                 return a.txt.localeCompare(b.txt);
             });
         
-            // 3. Génération du HTML
+            // 4. Génération du HTML
             container.innerHTML = allStats.map((s, index) => {
                 const isTop = index === 0 && s.val > 0;
                 return `
@@ -434,6 +442,13 @@
                         opacity: ${s.val === 0 ? '0.5' : '1'};
                         border-left: 4px solid ${isTop ? '#FFD700' : 'transparent'};
                         background: ${s.val > 0 ? '#fff' : 'rgba(255,255,255,0.4)'};
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 10px;
+                        margin-bottom: 5px;
+                        border-radius: 8px;
+                        box-sizing: border-box;
                     ">
                         <span style="flex:1; text-align:left; padding-right:10px;">
                             ${isTop ? '🔥 ' : ''}${s.txt}
