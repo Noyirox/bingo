@@ -337,7 +337,7 @@
                 const scores = {};
                 Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
                 const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
-                content.innerHTML = ranking.map((w, i) => `<div class="hof-item"><span>${i==0?'🥇 ':i==1?'🥈 ':i==2?'🥉 ':''}${w.name}</span><span>${w.count} v.</span></div>`).join('');
+                content.innerHTML = ranking.map((w, i) => `<div class="hof-item"><span>${i==0?'🥇 ':i==1?'🥈 ':i==2?'🥉 ':''}${w.name}</span><span>${w.count} victoires</span></div>`).join('');
             });
 
             const saved = localStorage.getItem(STORAGE_KEY);
