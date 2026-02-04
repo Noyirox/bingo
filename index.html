@@ -94,40 +94,42 @@
         #reset-btn { margin-top: 20px; padding: 12px 25px; border: none; background: #333; color: white; border-radius: 50px; cursor: pointer; font-weight: bold; }
         #hof-panel { position: fixed; inset: 0; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; padding-top: 50px; opacity: 0; pointer-events: none; transform: scale(1.1); transition: 0.3s; }
         #hof-panel.active { opacity: 1; pointer-events: auto; transform: scale(1); }
+        /* --- Podium & Stats (Correction Largeur) --- */
         .hof-item { 
             background: #f8f9fa; 
-            padding: 15px 20px; 
-            margin: 10px 0; 
-            width: 95%; /* On prend presque toute la largeur disponible */
-            max-width: 500px; /* Plus large pour le confort sur PC */
+            padding: 12px 15px; 
+            margin: 8px 0; 
+            width: 92%; /* Largeur augmentée */
+            max-width: 500px; 
             border-radius: 12px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
             box-sizing: border-box;
             border: 1px solid rgba(0,0,0,0.05);
         }
-        
+
         .hof-name {
-            font-weight: 800;
-            font-size: 1.1rem;
+            font-weight: 700;
+            font-size: 1rem;
             color: #222;
-            text-transform: uppercase;
             display: flex;
             align-items: center;
             gap: 10px;
-            flex: 1; /* Pousse le score vers la droite */
+            flex: 1; /* Très important : prend toute la place à gauche */
+            text-align: left;
         }
-        
+
         .hof-score {
             background: #e9ecef;
-            padding: 5px 12px;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #495057;
             font-weight: bold;
-            white-space: nowrap; /* Empêche le score de passer sur 2 lignes */
+            white-space: nowrap; /* Empêche le retour à la ligne du score */
+            margin-left: 10px;
         }
         #bingo-message { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); opacity: 0; background: linear-gradient(45deg, #ff00cc, #3333ff); color: white; font-size: 3rem; font-weight: 900; padding: 20px; border-radius: 20px; z-index: 6000; pointer-events: none; }
         #bingo-message.show { animation: funkyPopup 3s forwards; }
