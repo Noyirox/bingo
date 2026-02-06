@@ -385,6 +385,10 @@
             });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
+            
+            // VÉRIFICATION DE L'ÉLU.E :
+            // On lance checkWin dès l'apparition pour voir si les bonus alignés créent un Bingo
+            checkWin(); 
         }
         
         // Assigne la fonction au clic sur le cadenas (si tu l'as mis dans le HTML)
