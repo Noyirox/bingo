@@ -43,6 +43,25 @@
         }
         #presence-toggle-btn { left: 15px; font-size: 1.2rem; }
         #hof-btn { right: 15px; font-size: 1.5rem; }
+        #session-lock-btn {
+            background: #333;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        
+        #session-lock-btn:hover {
+            background: #444;
+            transform: scale(1.1);
+        }
+        
+        #session-lock-btn:active {
+            transform: scale(0.9);
+        }
 
         /* --- Panneau Présence --- */
         #presence-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 3500; }
@@ -200,7 +219,11 @@
         <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px;">Fermer</button>
     </div>
     
-    <button id="presence-toggle-btn" onclick="togglePresencePanel()">👥</button>
+    <div id="top-controls">
+        <button id="session-lock-btn" title="Clôturer la session et envoyer les stats">
+            🔒
+        </button>
+    </div>
     <button id="hof-btn" onclick="openHOF()">🏆</button>
 
     <h1>⚠️ Big Problems ⚠️</h1>
@@ -425,6 +448,42 @@
             }
         }
 
+        document.getElementById('session-lock-btn').onclick = function() {
+            if (confirm("Clôturer la session ? Cela enverra tes cases cochées aux statistiques même sans Bingo.")) {
+                manualCloseSession();
+            }
+        };
+        
+        function manualCloseSession() {
+            const cells = Array.from(document.querySelectorAll('.bingo-cell'));
+            const clickedCells = cells
+                .filter(cell => cell.classList.contains('clicked'))
+                .map(cell => cell.textContent);
+        
+            if (clickedCells.length === 0) {
+                alert("Aucune case n'est cochée, rien à envoyer !");
+                return;
+            }
+        
+            // On récupère le nom de l'utilisateur (comme pour un Bingo classique)
+            const userName = prompt("Session terminée ! Ton nom pour les stats :") || "Anonyme";
+            const cleanName = userName.charAt(0).toUpperCase() + userName.slice(1).toLowerCase();
+        
+            // Envoi à Firebase (on marque isBingo: false pour différencier d'une victoire)
+            const statsRef = database.ref('stats/' + Date.now());
+            statsRef.set({
+                user: cleanName,
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                clickedPhrases: clickedCells,
+                isBingo: false, // Important pour tes futures analyses
+                isLucky: false
+            }).then(() => {
+                alert("Statistiques envoyées !");
+                // Optionnel : On peut générer une nouvelle grille automatiquement après
+                createBingoCard();
+            });
+        }
+        
         function triggerConfetti() {
             for (let i = 0; i < 100; i++) {
                 const c = document.createElement('div');
