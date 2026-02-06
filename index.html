@@ -326,7 +326,10 @@
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             
             let finalSelection = [];
-            let poolBonus = ["✨", "🎁", "🍀", "🍻", "💎", "🃏", "⭐", "🚀"].sort(() => Math.random() - 0.5);
+            let poolBonus = ["Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison 🎁", 
+                "P'tit bonus ✨", "C'est bien parce que c'est toi", 
+                "Julian c'est grave un boss, nan ?", "On remercie les absents", 
+                "Parce que tu es là", "Une case offerte ! 🍀"].sort(() => Math.random() - 0.5);
         
             if (presents.length === 0) {
                 // --- CAS : PERSONNE COCHÉ ---
@@ -393,13 +396,32 @@
         
         // Assigne la fonction au clic sur le cadenas (si tu l'as mis dans le HTML)
         function manualCloseSession() {
-            if (confirm("Clôturer la session et envoyer les cases cochées ?")) {
-                // ... (ton code d'envoi Firebase déjà existant) ...
-                alert("Stats envoyées !");
-                createBingoCard(); // Relance une grille
-            }
-        }
+            // 1. On récupère uniquement les cases cochées qui existent dans la banque officielle
+            const cells = Array.from(document.querySelectorAll('.bingo-cell.clicked'));
+            const clickedPhrases = cells
+                .map(cell => cell.textContent)
+                .filter(phrase => banqueDeMots.some(m => m.p === phrase));
         
+            if (clickedPhrases.length === 0) {
+                alert("Aucune case valide cochée !");
+                return;
+            }
+        
+            // 2. ID de session anonyme basé sur le timestamp
+            const sessionID = "ANON_" + Date.now();
+            
+            // 3. Envoi groupé vers session_votes
+            const sessionRef = database.ref(`session_votes/${sessionID}`);
+            let updates = {};
+            clickedPhrases.forEach(phrase => {
+                updates[safeEncode(phrase)] = true;
+            });
+        
+            sessionRef.set(updates).then(() => {
+                alert("Stats mises à jour (en anonyme) !");
+                createBingoCard(); // On repart sur une nouvelle grille
+            });
+        }
         function checkWin() {
             const cells = Array.from(document.querySelectorAll('.bingo-cell'));
             const isClicked = i => cells[i].classList.contains('clicked');
