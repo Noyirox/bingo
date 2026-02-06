@@ -199,25 +199,18 @@
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <script>
+        // --- 1. UTILITAIRES & CONFIG ---
         function formatName(str) {
             if (!str) return "";
             return str.toLowerCase().replace(/(^|[\s-])\S/g, match => match.toUpperCase());
         }
-
+    
         function safeEncode(str) {
             return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
                 return String.fromCharCode('0x' + p1);
-            }));
+            })).replace(/[/=+]/g, ''); 
         }
-
-        function safeDecode(str) {
-            try {
-                return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-            } catch(e) { return atob(str); } // Repli si l'ancien format est encore là
-        }
-        // 1. CONFIG
+    
         const firebaseConfig = {
             apiKey: "AIzaSyCoj07_H212qNd1oe_-mUdZrjrYh0Js4fA", 
             authDomain: "big-problems.firebaseapp.com",
@@ -229,6 +222,7 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const STORAGE_KEY = 'bingo_save_v1';
+        
         const staff = ["Aymeric", "Pauline", "Jeremy", "Aurelie", "Alex"];
         const banqueDeMots = [
             { p: "Zoophilie 😻", owner: "Aymeric" }, { p: "Rachel 👽", owner: "Aymeric" }, { p: "H word", owner: "Aymeric" },
@@ -251,8 +245,8 @@
             { p: "Calvitie évoquée 👴", owner: null }, { p: "Anciens cassos du labo", owner: null }, { p: "Quelqu'un loupe son panier 🏀", owner: null },
             { p: "T le maudit 🟠", owner: null }, { p: "Les Zommes ♂️", owner: null }, { p: "Caillou 🗿", owner: null }
         ];
-
-        // 2. NAVIGATION
+    
+        // --- 2. NAVIGATION ---
         function togglePresencePanel() {
             const panel = document.getElementById('presence-settings');
             const overlay = document.getElementById('presence-overlay');
@@ -260,412 +254,202 @@
             overlay.classList.toggle('visible');
             document.body.style.overflow = isVisible ? 'hidden' : 'auto';
         }
-
+    
         function openHOF() { document.getElementById('hof-panel').classList.add('active'); }
         function closeHOF() { document.getElementById('hof-panel').classList.remove('active'); }
-
-        // 3. LOGIQUE JEU
+    
+        // --- 3. LOGIQUE JEU ---
         function renderPresenceList() {
             document.getElementById('check-list').innerHTML = staff.map(name => `
                 <label class="check-item"><input type="checkbox" class="presence-check" value="${name}" checked> ${name}</label>
             `).join('');
         }
-
-        function confirmAndGenerate() {
-            if (confirm("Générer une nouvelle grille ? La progression actuelle sera effacée.")) {
-                localStorage.removeItem(STORAGE_KEY);
-                createBingoCard();
-                togglePresencePanel(); // Ferme le panneau après création
-            }
+    
+        // Fonction pour attacher les clics (évite la répétition de code)
+        function attachCellEvents() {
+            document.querySelectorAll('.bingo-cell').forEach(cell => {
+                cell.onclick = function() {
+                    this.classList.toggle('clicked');
+                    localStorage.setItem(STORAGE_KEY, document.getElementById('bingo-card').innerHTML);
+                    checkWin();
+                };
+            });
         }
-
+    
         function createBingoCard(withAnimation = false) {
             const card = document.getElementById('bingo-card');
-            
-            // 1. Déclenchement de l'animation si nécessaire
             if (withAnimation) {
-                document.querySelectorAll('.bingo-cell').forEach(cell => {
-                    cell.classList.add('boggle-anim');
-                });
-                
-                setTimeout(() => {
-                    renderNewGrid();
-                }, 600);
+                document.querySelectorAll('.bingo-cell').forEach(cell => cell.classList.add('boggle-anim'));
+                setTimeout(() => renderNewGrid(), 600);
             } else {
                 renderNewGrid();
             }
-        
-            // 2. La fonction interne qui construit réellement la grille
+    
             function renderNewGrid() {
                 card.innerHTML = '';
-                
-                // Pool de bonus
-                let bonusPool = [
-                    "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
-                    "🎁", "P'tit bonus", "C'est bien parce que c'est toi", 
-                    "Julian c'est grave un boss, nan ?", "On remercie les absents", "Parce que tu es là"
-                ];
-                bonusPool.sort(() => Math.random() - 0.5);
-        
-                // Filtrage des mots selon les présents
+                let bonusPool = ["Bière ? 🍻", "🎁", "✨", "Julian Boss", "P'tit bonus"].sort(() => Math.random() - 0.5);
                 const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
                 let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
-                filtrés = filtrés.map(item => ({ ...item, isGift: false }));
-        
+                
                 let finalMots = [];
-        
-                // Logique Absence vs Présence
                 if (presents.length === 0) {
-                    for (let i = 0; i < 5; i++) {
-                        finalMots.push({ p: bonusPool[i] || "Case libre ✨", owner: null, isGift: true });
-                    }
-                    filtrés.sort(() => Math.random() - 0.5);
-                    finalMots = [...finalMots, ...filtrés.slice(0, 20)];
+                    for (let i = 0; i < 5; i++) finalMots.push({ p: bonusPool[i], isGift: true });
+                    finalMots = [...finalMots, ...filtrés.sort(() => Math.random() - 0.5).slice(0, 20)];
                 } else {
-                    filtrés.sort(() => Math.random() - 0.5);
-                    finalMots = filtrés.slice(0, 25);
+                    finalMots = filtrés.sort(() => Math.random() - 0.5).slice(0, 25);
                 }
-        
-                // Mélange Fisher-Yates
+    
                 for (let i = finalMots.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [finalMots[i], finalMots[j]] = [finalMots[j], finalMots[i]];
                 }
-        
-                // Création des éléments HTML
+    
                 finalMots.forEach(item => {
                     const cell = document.createElement('div');
-                    cell.className = 'bingo-cell';
+                    cell.className = 'bingo-cell' + (item.isGift ? ' clicked' : '');
                     cell.textContent = item.p;
-                    
-                    if (item.isGift) {
-                        cell.classList.add('clicked');
-                    }
-        
-                    cell.onclick = function() {
-                        this.classList.toggle('clicked');
-                        localStorage.setItem(STORAGE_KEY, card.innerHTML);
-                        checkWin();
-                    };
-                    
                     card.appendChild(cell);
                 });
-        
+    
+                attachCellEvents();
                 localStorage.setItem(STORAGE_KEY, card.innerHTML);
                 checkWin();
-            } // Fin de renderNewGrid
-        } // Fin de createBingoCard
-
+            }
+        }
+    
         function checkWin() {
             const cells = Array.from(document.querySelectorAll('.bingo-cell'));
-            const isClicked = i => cells[i].classList.contains('clicked');
+            const isClicked = i => cells[i] && cells[i].classList.contains('clicked');
             const wins = [[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],[0,6,12,18,24],[4,8,12,16,20]];
             
-            // On cherche si une ligne gagnante existe
             const winningCombo = wins.find(c => c.every(isClicked));
-        
             if (winningCombo) {
                 const msg = document.getElementById('bingo-message');
                 if (msg.classList.contains('show')) return;
+    
+                const isFullLuck = winningCombo.every(index => !banqueDeMots.some(m => m.p === cells[index].textContent));
+                msg.innerHTML = isFullLuck ? "🍀 L'ÉLU·E 🍀" : "BINGO !";
+                msg.style.background = isFullLuck ? "linear-gradient(45deg, #00FF87, #60EFFF)" : "linear-gradient(45deg, #ff00cc, #3333ff)";
                 
-                // --- DETECTION EASTER EGG ---
-                // On vérifie si TOUTES les cases de la combinaison gagnante sont des bonus
-                // Dans ton code, les bonus n'ont pas la clé .owner ou sont marqués isGift
-                const isFullLuck = winningCombo.every(index => {
-                    const txt = cells[index].textContent;
-                    return !banqueDeMots.some(m => m.p === txt); 
-                });
-        
-                if (isFullLuck) {
-                    msg.innerHTML = "🍀 L'ÉLU·E 🍀";
-                    msg.style.background = "linear-gradient(45deg, #00FF87, #60EFFF)";
-                } else {
-                    msg.innerHTML = "BINGO !";
-                    msg.style.background = "linear-gradient(45deg, #ff00cc, #3333ff)";
-                }
-                // ----------------------------
-        
                 msg.classList.add('show');
                 triggerConfetti();
-        
+    
                 setTimeout(() => {
-                    let name = prompt(isFullLuck ? "Incroyable ! 5 cases bonus alignées ! Quel est ton nom, Élu·e :" : "BINGO ! Ton nom :");
+                    let name = prompt(isFullLuck ? "5 cases bonus alignées ! Ton nom :" : "BINGO ! Ton nom :");
                     if (name) {
                         const cleanName = formatName(name.trim());
                         const now = Date.now();
                         const sessionID = "S_" + Math.random().toString(36).substr(2, 9);
-                        
-                        // Si c'est un coup de chance, on ajoute un suffixe au nom pour le podium
                         const displayName = isFullLuck ? `${cleanName} 🍀` : cleanName;
-        
-                        database.ref('winners').push({ 
-                            name: displayName, 
-                            timestamp: now,
-                            lucky: isFullLuck // On garde l'info en base au cas où
-                        });
-        
-                        database.ref('bingo_signal').set({
-                            winner: displayName,
-                            timestamp: now,
-                            sessionID: sessionID,
-                            isLucky: isFullLuck
-                        });
+    
+                        database.ref('winners').push({ name: displayName, timestamp: now, lucky: isFullLuck });
+                        database.ref('bingo_signal').set({ winner: displayName, timestamp: now, sessionID: sessionID, isLucky: isFullLuck });
                     }
                     msg.classList.remove('show');
                 }, 2600);
             }
         }
-
+    
+        // --- 4. EFFETS & ADMIN ---
         function triggerConfetti() {
             for (let i = 0; i < 100; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
-                
-                // --- POSITION ET COULEUR ---
-                const startX = Math.random() * 100; // Position horizontale (0 à 100vw)
-                const startY = Math.random() * -20; // Commence un peu au-dessus de l'écran
-                c.style.left = startX + 'vw';
-                c.style.top = startY + 'vh';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.top = Math.random() * -20 + 'vh';
                 c.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                
                 document.body.appendChild(c);
-        
-                // --- ANIMATION ÉPARPILLÉE ---
-                const duration = 2000 + Math.random() * 3000;
-                const drift = (Math.random() - 0.5) * 20; // Dérive latérale (gauche/droite)
-        
-                c.animate([
-                    { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
-                    { transform: `translate(${drift}vw, 105vh) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-                ], {
-                    duration: duration,
-                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
-                }).onfinish = () => c.remove();
+                c.animate([{ transform: `translate(0, 0) rotate(0deg)`, opacity: 1 }, { transform: `translate(${(Math.random()-0.5)*20}vw, 105vh) rotate(${Math.random()*360}deg)`, opacity: 0 }], { duration: 2000 + Math.random()*3000, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)' }).onfinish = () => c.remove();
             }
         }
-
-        function resetHof() { 
-            if(confirm("Effacer toute la saison (Podium ET Stats des cases) ?")) {
-                database.ref('winners').remove(); 
-                database.ref('session_votes').remove();
-            }
-        }
-
-        function manualCloseSession() {
-            if (!confirm("Voulez-vous clôturer la session ? Cela enregistrera toutes les cases cochées dans les statistiques globales, même s'il n'y a pas de Bingo.")) return;
-        
-            const now = Date.now();
-            const sessionID = "MANUAL_" + Math.random().toString(36).substr(2, 9);
-        
-            // On envoie un signal de clôture (sans nom de vainqueur précis)
-            database.ref('bingo_signal').set({
-                winner: "Clôture Manuelle",
-                timestamp: now,
-                sessionID: sessionID,
-                isLucky: false,
-                isManual: true // Petit flag pour savoir que ce n'est pas un vrai Bingo
-            });
-        
-            alert("Session clôturée ! Les stats ont été mises à jour.");
-            closeHOF();
-        }
-        
-        // Modifie légèrement ton écouteur 'bingo_signal' existant pour gérer l'alerte différemment
-        database.ref('bingo_signal').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-        
-            const lastID = localStorage.getItem('processed_bingo');
-            if (data.sessionID === lastID) return;
-            localStorage.setItem('processed_bingo', data.sessionID);
-        
-            // 1. Alerte visuelle : on ne montre l'alerte trophée QUE si ce n'est pas une clôture manuelle
-            if (!data.isManual) {
-                showWinnerAlert(data.winner, data.isLucky);
-            } else {
-                console.log("Clôture manuelle reçue : synchronisation des cases...");
-            }
-        
-            // 2. RECENSEMENT (identique pour Bingo ou Clôture)
-            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-                const phrase = cell.textContent;
-                const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
-                if (existeDansBanque) {
-                    const safeKey = safeEncode(phrase);
-                    database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
-                }
-            });
-        });
-        
+    
         function showWinnerAlert(winnerName, isLucky) {
             const alertBox = document.createElement('div');
             const color = isLucky ? "#00FF87" : "#FFD700";
-            const text = isLucky ? `🍀 INCROYABLE : ${winnerName} a gagné sans rien faire !` : `🏆 ${winnerName} a eu un BINGO !`;
-            
             alertBox.style = `position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#000; color:#fff; padding:15px 25px; border-radius:50px; z-index:9999; border:3px solid ${color}; font-weight:bold; box-shadow:0 10px 30px rgba(0,0,0,0.5); white-space:nowrap;`;
-            alertBox.innerHTML = text;
-            
+            alertBox.innerHTML = isLucky ? `🍀 INCROYABLE : ${winnerName} a gagné !` : `🏆 ${winnerName} a eu un BINGO !`;
             document.body.appendChild(alertBox);
-            setTimeout(() => {
-                alertBox.style.transition = "all 0.5s";
-                alertBox.style.opacity = "0";
-                alertBox.style.top = "0px";
-                setTimeout(() => alertBox.remove(), 500);
-            }, 6000);
+            setTimeout(() => { alertBox.style.transition = "all 0.5s"; alertBox.style.opacity = "0"; setTimeout(() => alertBox.remove(), 500); }, 6000);
         }
-        
-        // 4. INIT
+    
+        function manualCloseSession() {
+            if (!confirm("Clôturer la session et enregistrer les stats ?")) return;
+            database.ref('bingo_signal').set({ winner: "Clôture Manuelle", timestamp: Date.now(), sessionID: "M_" + Math.random().toString(36).substr(2, 9), isManual: true });
+            closeHOF();
+        }
+    
+        function resetHof() { 
+            if(confirm("Effacer toute la saison ?")) { database.ref('winners').remove(); database.ref('session_votes').remove(); }
+        }
+    
+        // --- 5. INITIALISATION & LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
             renderPresenceList();
             
-            // Hall of Fame Listener
-        database.ref('winners').on('value', (snap) => {
-            const data = snap.val();
-            const content = document.getElementById('hof-content');
-            if (!data) { content.innerHTML = "Aucun gagnant pour le moment"; return; }
-        
-            const scores = {};
-            Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
-            const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
-        
-            content.innerHTML = ranking.map((w, i) => {
-                const medal = i == 0 ? '🥇' : i == 1 ? '🥈' : i == 2 ? '🥉' : '👤';
-                return `
-                    <div class="hof-item">
-                        <div class="hof-name">
-                            <span>${medal}</span>
-                            <span>${w.name}</span>
-                        </div>
-                        <div class="hof-score">
-                            ${w.count} victoire${w.count > 1 ? 's' : ''}
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        });
-
-        const saved = localStorage.getItem(STORAGE_KEY);
+            // Chargement grille existante
+            const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 document.getElementById('bingo-card').innerHTML = saved;
-                document.querySelectorAll('.bingo-cell').forEach(c => {
-                    c.onclick = function() {
-                        this.classList.toggle('clicked');
-                        localStorage.setItem(STORAGE_KEY, document.getElementById('bingo-card').innerHTML);
-                        checkWin();
-                    };
-                });
+                attachCellEvents();
             } else {
                 createBingoCard();
-                togglePresencePanel(); // Ouvre par défaut si pas de sauvegarde
+                togglePresencePanel();
             }
-
-        // A. Écouter le signal de Bingo ou Clôture pour synchroniser et réinitialiser
-        database.ref('bingo_signal').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-        
-            const lastID = localStorage.getItem('processed_bingo');
-            if (data.sessionID === lastID) return;
-            localStorage.setItem('processed_bingo', data.sessionID);
-        
-            // 1. RECENSEMENT : Envoyer ses cases aux stats AVANT de réinitialiser
-            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-                const phrase = cell.textContent;
-                const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
-                if (existeDansBanque) {
-                    const safeKey = safeEncode(phrase);
-                    database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
-                }
-            });
-        
-            // 2. ALERTES VISUELLES
-            if (!data.isManual) {
-                showWinnerAlert(data.winner, data.isLucky);
-            }
-        
-            // 3. RÉINITIALISATION GÉNÉRALE (Délai pour laisser le temps de voir l'alerte/le bingo)
-        setTimeout(() => {
-            localStorage.removeItem(STORAGE_KEY);
-            // On lance la création avec l'animation Boggle !
-            createBingoCard(true); 
-            
-            if(data.isManual) {
-                alert("La session a été clôturée. Nouvelle grille générée !");
-            }
-        }, data.isManual ? 500 : 5000);
-            
-        // B. Afficher l'intégralité des Statistiques basées sur les sessions uniques
-        database.ref('session_votes').on('value', (snap) => {
-            const allSessions = snap.val() || {};
-            const container = document.getElementById('stats-content');
-            if (!container) return;
-        
-            // 1. On calcule les totaux en comptant la présence de la clé dans chaque session
-            const globalCounts = {};
-            Object.values(allSessions).forEach(sessionCases => {
-                // sessionCases contient toutes les safeKeys cochées lors d'une partie
-                Object.keys(sessionCases).forEach(safeKey => {
-                    globalCounts[safeKey] = (globalCounts[safeKey] || 0) + 1;
+    
+            // UN SEUL écouteur pour le signal de fin (Bingo ou Manuel)
+            database.ref('bingo_signal').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+    
+                const lastID = localStorage.getItem('processed_bingo');
+                if (data.sessionID === lastID) return;
+                localStorage.setItem('processed_bingo', data.sessionID);
+    
+                // Recensement des cases
+                document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+                    const phrase = cell.textContent;
+                    if (banqueDeMots.some(m => m.p === phrase)) {
+                        database.ref(`session_votes/${data.sessionID}/${safeEncode(phrase)}`).set(true);
+                    }
                 });
+    
+                if (!data.isManual) showWinnerAlert(data.winner, data.isLucky);
+    
+                setTimeout(() => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    createBingoCard(true);
+                    if(data.isManual) alert("Nouvelle session démarrée !");
+                }, data.isManual ? 500 : 5000);
             });
-        
-            // 2. On croise la banque de mots avec nos calculs de sessions
-            const allStats = banqueDeMots.map(item => {
-                const phrase = item.p;
-                const safeKey = safeEncode(phrase); // Utilise ta fonction de formatage d'accent
-                return {
-                    txt: phrase,
-                    val: globalCounts[safeKey] || 0
-                };
+    
+            // Listener Hall of Fame
+            database.ref('winners').on('value', (snap) => {
+                const data = snap.val();
+                const content = document.getElementById('hof-content');
+                if (!data) { content.innerHTML = "Aucun gagnant"; return; }
+                const scores = {};
+                Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
+                const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
+                content.innerHTML = ranking.map((w, i) => `<div class="hof-item"><div class="hof-name"><span>${i==0?'🥇':i==1?'🥈':i==2?'🥉':'👤'}</span><span>${w.name}</span></div><div class="hof-score">${w.count} victoire${w.count>1?'s':''}</div></div>`).join('');
             });
-        
-            // 3. Tri : d'abord le score (décroissant), puis alphabétique
-            allStats.sort((a, b) => {
-                if (b.val !== a.val) return b.val - a.val;
-                return a.txt.localeCompare(b.txt);
+    
+            // Listener Statistiques
+            database.ref('session_votes').on('value', (snap) => {
+                const allSessions = snap.val() || {};
+                const container = document.getElementById('stats-content');
+                if (!container) return;
+                const globalCounts = {};
+                Object.values(allSessions).forEach(session => Object.keys(session).forEach(key => globalCounts[key] = (globalCounts[key] || 0) + 1));
+                const allStats = banqueDeMots.map(item => ({ txt: item.p, val: globalCounts[safeEncode(item.p)] || 0 }))
+                    .sort((a, b) => b.val - a.val || a.txt.localeCompare(b.txt));
+                container.innerHTML = allStats.map((s, idx) => `
+                    <div class="hof-item" style="opacity:${s.val==0?0.5:1}; background:${s.val>0?'#fff':'#eee'}; margin:2px; padding:8px; border-radius:5px; display:flex; justify-content:space-between;">
+                        <span>${idx==0&&s.val>0?'🔥 ':''}${s.txt}</span>
+                        <span style="background:#4CAF50; color:white; padding:0 8px; border-radius:10px;">${s.val}</span>
+                    </div>`).join('');
             });
-        
-            // 4. Génération du HTML
-            container.innerHTML = allStats.map((s, index) => {
-                const isTop = index === 0 && s.val > 0;
-                return `
-                    <div class="hof-item" style="
-                        font-size:0.85rem; 
-                        width: 90%; 
-                        align-self: center; 
-                        opacity: ${s.val === 0 ? '0.5' : '1'};
-                        border-left: 4px solid ${isTop ? '#FFD700' : 'transparent'};
-                        background: ${s.val > 0 ? '#fff' : 'rgba(255,255,255,0.4)'};
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                        padding: 10px;
-                        margin-bottom: 5px;
-                        border-radius: 8px;
-                        box-sizing: border-box;
-                    ">
-                        <span style="flex:1; text-align:left; padding-right:10px;">
-                            ${isTop ? '🔥 ' : ''}${s.txt}
-                        </span>
-                        <span style="
-                            background: ${s.val > 0 ? '#4CAF50' : '#ccc'}; 
-                            color:white; 
-                            padding:2px 10px; 
-                            border-radius:15px; 
-                            font-weight:bold; 
-                            min-width:20px; 
-                            text-align:center;
-                        ">
-                            ${s.val}
-                        </span>
-                    </div>
-                `;
-            }).join('');
-        });
-
-            document.getElementById('reset-btn').onclick = () => {
-                togglePresencePanel(); // On ouvre juste le panneau
-            };
+    
+            document.getElementById('reset-btn').onclick = togglePresencePanel;
         });
     </script>
 </body>
