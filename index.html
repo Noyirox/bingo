@@ -268,61 +268,51 @@
             const card = document.getElementById('bingo-card');
             card.innerHTML = '';
             
-            // 1. Pool de bonus pour le "Mode Chance"
             let bonusPool = [
-                "Si tu lis ça, tu me dois une bière 🍻", 
-                "De la part de la maison 🎁", 
-                "P'tit bonus ✨",
-                "C'est bien parce que c'est toi", 
-                "Julian c'est grave un boss, nan ?",
-                "On remercie les absents", 
-                "Parce que tu es là",
-                "Une case offerte ! 🍀",
-                "Offert par la direction",
-                "Cadeau du ciel ☁️"
+                "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison 🎁", 
+                "P'tit bonus ✨", "C'est bien parce que c'est toi", 
+                "Julian c'est grave un boss, nan ?", "On remercie les absents", 
+                "Parce que tu es là", "Une case offerte ! 🍀",
+                "Offert par la direction", "Cadeau du ciel ☁️"
             ];
-            // Mélange des bonus
             bonusPool.sort(() => Math.random() - 0.5);
         
-            // 2. Tirage de 5 bonus OBLIGATOIRES (pour permettre le Bingo 100% chance)
-            let selection = [];
-            for (let i = 0; i < 5; i++) {
-                selection.push({ p: bonusPool.pop(), owner: null, isGift: true });
-            }
-        
-            // 3. Filtrage des mots de la banque selon les présents
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
-            let filtrésBanque = banqueDeMots
-                .filter(m => !m.owner || presents.includes(m.owner))
-                .map(item => ({ ...item, isGift: false }));
+            
+            let selection = [];
         
-            // On mélange la banque pour ne pas prendre toujours les mêmes
-            filtrésBanque.sort(() => Math.random() - 0.5);
-        
-            // 4. On complète la sélection jusqu'à 25
-            // On pioche dans la banque d'abord
-            while (selection.length < 25 && filtrésBanque.length > 0) {
-                selection.push(filtrésBanque.pop());
+            // --- LOGIQUE CONDITIONNELLE ---
+            if (presents.length === 0) {
+                // MODE FANTÔME : Personne n'est là, on force le mode chance
+                // On prend 5 bonus qu'on marquera comme gagnants
+                for (let i = 0; i < 5; i++) {
+                    selection.push({ p: bonusPool.pop(), owner: null, isGift: true });
+                }
+            } else {
+                // MODE NORMAL : On filtre la banque par les présents
+                selection = banqueDeMots
+                    .filter(m => !m.owner || presents.includes(m.owner))
+                    .map(item => ({ ...item, isGift: false }));
             }
         
-            // Si la banque est vide et qu'on n'a pas 25, on reprend des bonus
+            // --- COMPLÉTION ---
+            // Si on a moins de 25 (parce que pas assez de phrases ou mode fantôme)
+            // On complète avec le reste du pool bonus, mais SANS les cocher auto (isGift: false)
+            // Sauf si on est en mode fantôme, on peut décider de les cocher ou non.
             while (selection.length < 25) {
                 const text = bonusPool.length > 0 ? bonusPool.pop() : "Case libre ✨";
-                selection.push({ p: text, owner: null, isGift: true });
+                selection.push({ p: text, owner: null, isGift: false }); 
             }
         
-            // 5. Mélange final Fisher-Yates pour répartir les 5 bonus n'importe où
-            for (let i = selection.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [selection[i], selection[j]] = [selection[j], selection[i]];
-            }
+            // --- MÉLANGE & RENDU ---
+            selection = selection.sort(() => Math.random() - 0.5).slice(0, 25);
         
-            // 6. Génération HTML
             selection.forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
                 
+                // Seules les 5 cases du mode fantôme seront pré-cochées
                 if (item.isGift) {
                     cell.classList.add('clicked');
                 }
