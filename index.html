@@ -268,42 +268,57 @@
             const card = document.getElementById('bingo-card');
             card.innerHTML = '';
             
-        // 1. Liste des bonus disponibles
+            // 1. Pool de bonus pour le "Mode Chance"
             let bonusPool = [
-                "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
-                "🎁", "P'tit bonus",
-                "C'est bien parce que c'est toi", "Julian c'est grave un boss, nan ?",
-                "On remercie les absents", "Parce que tu es là"
+                "Si tu lis ça, tu me dois une bière 🍻", 
+                "De la part de la maison 🎁", 
+                "P'tit bonus ✨",
+                "C'est bien parce que c'est toi", 
+                "Julian c'est grave un boss, nan ?",
+                "On remercie les absents", 
+                "Parce que tu es là",
+                "Une case offerte ! 🍀",
+                "Offert par la direction",
+                "Cadeau du ciel ☁️"
             ];
-        
-            // Mélange initial du pool de bonus pour le tirage sans remise
+            // Mélange des bonus
             bonusPool.sort(() => Math.random() - 0.5);
         
-            // 2. Filtrage des mots selon les présents
+            // 2. Tirage de 5 bonus OBLIGATOIRES (pour permettre le Bingo 100% chance)
+            let selection = [];
+            for (let i = 0; i < 5; i++) {
+                selection.push({ p: bonusPool.pop(), owner: null, isGift: true });
+            }
+        
+            // 3. Filtrage des mots de la banque selon les présents
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
-            let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
-            
-            // On marque les vraies cases
-            filtrés = filtrés.map(item => ({ ...item, isGift: false }));
+            let filtrésBanque = banqueDeMots
+                .filter(m => !m.owner || presents.includes(m.owner))
+                .map(item => ({ ...item, isGift: false }));
         
-            // 3. Compléter si < 25 (Tirage sans remise)
-            if (filtrés.length < 25) {
-                const manquant = 25 - filtrés.length;
-                for (let i = 0; i < manquant; i++) {
-                    // On prend le i-ème élément du pool mélangé
-                    const text = bonusPool[i] || "Case libre ✨"; 
-                    filtrés.push({ p: text, owner: null, isGift: true });
-                }
+            // On mélange la banque pour ne pas prendre toujours les mêmes
+            filtrésBanque.sort(() => Math.random() - 0.5);
+        
+            // 4. On complète la sélection jusqu'à 25
+            // On pioche dans la banque d'abord
+            while (selection.length < 25 && filtrésBanque.length > 0) {
+                selection.push(filtrésBanque.pop());
             }
-            
-            // 4. Mélange final Fisher-Yates pour la grille
-            for (let i = filtrés.length - 1; i > 0; i--) {
+        
+            // Si la banque est vide et qu'on n'a pas 25, on reprend des bonus
+            while (selection.length < 25) {
+                const text = bonusPool.length > 0 ? bonusPool.pop() : "Case libre ✨";
+                selection.push({ p: text, owner: null, isGift: true });
+            }
+        
+            // 5. Mélange final Fisher-Yates pour répartir les 5 bonus n'importe où
+            for (let i = selection.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [filtrés[i], filtrés[j]] = [filtrés[j], filtrés[i]];
+                [selection[i], selection[j]] = [selection[j], selection[i]];
             }
         
-            // 5. Génération HTML
-            filtrés.slice(0, 25).forEach(item => {
+            // 6. Génération HTML
+            selection.forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
@@ -321,9 +336,8 @@
             });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
-            checkWin(); 
         }
-
+        
         function checkWin() {
             const cells = Array.from(document.querySelectorAll('.bingo-cell'));
             const isClicked = i => cells[i].classList.contains('clicked');
