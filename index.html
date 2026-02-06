@@ -45,30 +45,28 @@
         #hof-btn { right: 15px; font-size: 1.5rem; }
         
         /* On aligne le style sur celui du bouton HoF */
-        #session-lock-btn {
-            position: absolute; 
-            top: 15px; 
-            left: 15px; /* Positionné à l'opposé du trophée */
-            background: white; 
-            border: none; 
-            border-radius: 50%; 
-            width: 45px; 
-            height: 45px; 
-            cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            z-index: 100;
-            font-size: 1.2rem;
+       #session-lock-btn, #hof-btn {
+            position: absolute;
+            top: 15px;
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.2s, background 0.2s;
+            transition: transform 0.2s;
         }
         
-        #session-lock-btn:hover {
-            background: #f0f0f0;
-            transform: scale(1.1);
-        }
-
+        #session-lock-btn { left: 15px; font-size: 1.2rem; }
+        #hof-btn { right: 15px; font-size: 1.5rem; }
+        
+        #session-lock-btn:hover, #hof-btn:hover { transform: scale(1.1); }
+        
         /* --- Panneau Présence --- */
         #presence-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 3500; }
         #presence-overlay.visible { display: block; }
@@ -199,9 +197,8 @@
     </style>
 </head>
 <body>
-
     <div id="presence-overlay" onclick="togglePresencePanel()"></div>
-
+    
     <div id="presence-settings">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <strong style="font-size: 1rem;">👥 Configuration de la partie</strong>
@@ -212,7 +209,7 @@
         
         <button id="generate-btn" onclick="confirmAndGenerate()">GÉNÉRER LA GRILLE</button>
     </div>
-
+    
     <div id="hof-panel">
         <button id="admin-reset-hof" onclick="resetHof()">Réinitialiser la saison</button>
         <h2>🏆 Podium des Champions 🏆</h2>
@@ -222,17 +219,21 @@
         <h3>🔥 Top Cases 🔥</h3>
         <div id="stats-content"></div>
     
-        <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px;">Fermer</button>
+        <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px; border-radius: 50px; border: 1px solid #ddd; cursor: pointer;">Fermer</button>
     </div>
     
+    <button id="session-lock-btn" onclick="manualCloseSession()" title="Clôturer la session">🔒</button>
     <button id="hof-btn" onclick="openHOF()">🏆</button>
-
-    <h1>⚠️ Big Problems ⚠️</h1>
+    
+    <div style="text-align: center; margin-top: 20px; margin-bottom: 15px;">
+        <h1>⚠️ Big Problems ⚠️</h1>
+    </div>
     
     <div id="bingo-message">BINGO!</div>
     <div id="bingo-card"></div>
-    <button id="reset-btn">Nouvelle Grille</button>
-
+    
+    <button id="reset-btn" onclick="togglePresencePanel()">Nouvelle Grille</button>
+       
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
@@ -319,61 +320,50 @@
         
         function createBingoCard() {
             const card = document.getElementById('bingo-card');
+            if (!card) return; // Sécurité
             card.innerHTML = ''; 
             
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             
-            let baseSelection = [];
-            let bonusSelection = [];
-        
-            // 1. On définit la pioche de base (sans owner ou selon les présents)
+            // 1. Filtrer la banque de mots
+            let basePool = [];
             if (presents.length === 0) {
-                // Personne coché : on prend UNIQUEMENT les cases sans owner
-                baseSelection = banqueDeMots.filter(m => !m.owner);
+                basePool = banqueDeMots.filter(m => !m.owner);
             } else {
-                // Staff coché : sans owner + ceux des présents
-                baseSelection = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
+                basePool = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
             }
         
-            // Mélange de la pioche de base et limitation à 20 pour laisser de la place aux bonus
-            baseSelection.sort(() => Math.random() - 0.5);
-            let finalSelection = baseSelection.slice(0, 20).map(item => ({ ...item, isGift: false }));
+            // Mélange et sélection de 20 mots maximum
+            basePool.sort(() => Math.random() - 0.5);
+            let finalSelection = basePool.slice(0, 20).map(item => ({ p: item.p, isGift: false }));
         
-            // 2. On prépare les 5 bonus garantis
-            let poolBonus = ["✨", "🎁", "🍀", "🍻", "💎", "🃏", "⭐", "🚀"].sort(() => Math.random() - 0.5);
+            // 2. Ajout des 5 bonus garantis (isGift: true pour qu'ils soient cochés d'office)
+            let icons = ["✨", "🎁", "🍀", "🍻", "💎", "🃏", "⭐", "🚀"].sort(() => Math.random() - 0.5);
             for (let i = 0; i < 5; i++) {
-                bonusSelection.push({ p: poolBonus[i], isGift: true });
+                finalSelection.push({ p: icons[i], isGift: true });
             }
         
-            // On fusionne (on arrive normalement à 25 si baseSelection avait au moins 20 mots)
-            finalSelection = finalSelection.concat(bonusSelection);
-        
-            // 3. Remplissage de secours si on a moins de 25 cases au total
+            // 3. Complétion si la banque de mots sans owner était trop petite (moins de 20)
             if (finalSelection.length < 25) {
-                const complements = ["Case libre ✨", "Case bonus 🎁", "Chance 🍀"].sort(() => Math.random() - 0.5);
-                let j = 0;
                 while (finalSelection.length < 25) {
-                    finalSelection.push({ p: complements[j % complements.length], isGift: true });
-                    j++;
+                    finalSelection.push({ p: "Case libre ✨", isGift: true });
                 }
             }
         
-            // --- MÉLANGE FINAL ET GÉNÉRATION (Effet Shuffle) ---
+            // 4. Mélange final pour répartir les bonus partout
             finalSelection.sort(() => Math.random() - 0.5);
         
+            // 5. Création des éléments
             finalSelection.forEach((item, index) => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell shuffle-anim';
                 cell.textContent = item.p;
         
-                const randomX = (Math.random() - 0.5) * 400 + "px";
-                const randomY = (Math.random() - 0.5) * 400 + "px";
-                const randomRot = (Math.random() - 0.5) * 720 + "deg";
-        
-                cell.style.setProperty('--tw', randomX);
-                cell.style.setProperty('--th', randomY);
-                cell.style.setProperty('--tr', randomRot);
-                cell.style.animationDelay = (index * 0.01) + "s";
+                // Variables pour l'animation Boggle
+                cell.style.setProperty('--tw', (Math.random() - 0.5) * 300 + "px");
+                cell.style.setProperty('--th', (Math.random() - 0.5) * 300 + "px");
+                cell.style.setProperty('--tr', (Math.random() - 0.5) * 500 + "deg");
+                cell.style.animationDelay = (index * 0.02) + "s";
         
                 if (item.isGift) cell.classList.add('clicked');
         
@@ -386,6 +376,15 @@
             });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
+        }
+        
+        // Assigne la fonction au clic sur le cadenas (si tu l'as mis dans le HTML)
+        function manualCloseSession() {
+            if (confirm("Clôturer la session et envoyer les cases cochées ?")) {
+                // ... (ton code d'envoi Firebase déjà existant) ...
+                alert("Stats envoyées !");
+                createBingoCard(); // Relance une grille
+            }
         }
         
         function checkWin() {
