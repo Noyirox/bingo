@@ -21,6 +21,18 @@
             background: rgba(0,0,0,0.01);
         }
 
+        @keyframes boggleShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2px, -2px) rotate(1deg); }
+            50% { transform: translate(-2px, 2px) rotate(-1deg); }
+            75% { transform: translate(2px, 2px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        .boggle-anim {
+            animation: boggleShake 0.15s infinite;
+        }
+
         /* Personnalisation de la barre de scroll */
         #stats-content::-webkit-scrollbar { width: 6px; }
         #stats-content::-webkit-scrollbar-track { background: transparent; }
@@ -167,6 +179,9 @@
         <hr style="width:80%; margin:20px 0; opacity:0.2;">
         <h3>🔥 Top Cases 🔥</h3>
         <div id="stats-content"></div>
+        <button id="close-session-btn" onclick="manualCloseSession()" style="margin-top:20px; padding: 10px 20px; background: #607d8b; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+    🔒 Clôturer la session sans gagnant
+</button>
     
         <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px;">Fermer</button>
     </div>
@@ -264,10 +279,26 @@
             }
         }
 
-        function createBingoCard() {
+        function createBingoCard(withAnimation = false) {
             const card = document.getElementById('bingo-card');
-            card.innerHTML = '';
             
+            if (withAnimation) {
+                // On ajoute la classe d'animation à toutes les cellules existantes
+                document.querySelectorAll('.bingo-cell').forEach(cell => {
+                    cell.classList.add('boggle-anim');
+                });
+                
+                // On attend un petit peu (600ms) avant de réellement changer le contenu
+                setTimeout(() => {
+                    renderNewGrid();
+                }, 600);
+            } else {
+                renderNewGrid();
+            }
+        
+            function renderNewGrid() {
+                card.innerHTML = '';
+                    
             // 1. Définition du pool de bonus
             let bonusPool = [
                 "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
@@ -306,27 +337,32 @@
                 [finalMots[i], finalMots[j]] = [finalMots[j], finalMots[i]];
             }
 
-            // 4. Génération HTML
+           // 4. Génération HTML des cellules
             finalMots.forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
                 
+                // Si c'est un bonus, on le coche d'office
                 if (item.isGift) {
                     cell.classList.add('clicked');
                 }
-
+    
+                // Gestion du clic sur la cellule
                 cell.onclick = function() {
                     this.classList.toggle('clicked');
                     localStorage.setItem(STORAGE_KEY, card.innerHTML);
                     checkWin();
                 };
+                
                 card.appendChild(cell);
             });
-
+    
+            // 5. Sauvegarde et vérification immédiate (pour l'Easter Egg des bonus alignés)
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
-            checkWin(); 
+            checkWin();
         }
+    }
 
         function checkWin() {
             const cells = Array.from(document.querySelectorAll('.bingo-cell'));
@@ -422,6 +458,52 @@
                 database.ref('session_votes').remove();
             }
         }
+
+        function manualCloseSession() {
+            if (!confirm("Voulez-vous clôturer la session ? Cela enregistrera toutes les cases cochées dans les statistiques globales, même s'il n'y a pas de Bingo.")) return;
+        
+            const now = Date.now();
+            const sessionID = "MANUAL_" + Math.random().toString(36).substr(2, 9);
+        
+            // On envoie un signal de clôture (sans nom de vainqueur précis)
+            database.ref('bingo_signal').set({
+                winner: "Clôture Manuelle",
+                timestamp: now,
+                sessionID: sessionID,
+                isLucky: false,
+                isManual: true // Petit flag pour savoir que ce n'est pas un vrai Bingo
+            });
+        
+            alert("Session clôturée ! Les stats ont été mises à jour.");
+            closeHOF();
+        }
+        
+        // Modifie légèrement ton écouteur 'bingo_signal' existant pour gérer l'alerte différemment
+        database.ref('bingo_signal').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+        
+            const lastID = localStorage.getItem('processed_bingo');
+            if (data.sessionID === lastID) return;
+            localStorage.setItem('processed_bingo', data.sessionID);
+        
+            // 1. Alerte visuelle : on ne montre l'alerte trophée QUE si ce n'est pas une clôture manuelle
+            if (!data.isManual) {
+                showWinnerAlert(data.winner, data.isLucky);
+            } else {
+                console.log("Clôture manuelle reçue : synchronisation des cases...");
+            }
+        
+            // 2. RECENSEMENT (identique pour Bingo ou Clôture)
+            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+                const phrase = cell.textContent;
+                const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
+                if (existeDansBanque) {
+                    const safeKey = safeEncode(phrase);
+                    database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
+                }
+            });
+        });
         
         function showWinnerAlert(winnerName, isLucky) {
             const alertBox = document.createElement('div');
@@ -485,7 +567,7 @@
                 togglePresencePanel(); // Ouvre par défaut si pas de sauvegarde
             }
 
-        // A. Écouter le signal de Bingo pour synchroniser les stats et l'alerte
+        // A. Écouter le signal de Bingo ou Clôture pour synchroniser et réinitialiser
         database.ref('bingo_signal').on('value', (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
@@ -494,23 +576,32 @@
             if (data.sessionID === lastID) return;
             localStorage.setItem('processed_bingo', data.sessionID);
         
-        // 1. Alerte visuelle
-        showWinnerAlert(data.winner); // Ta fonction d'alerte
+            // 1. RECENSEMENT : Envoyer ses cases aux stats AVANT de réinitialiser
+            document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
+                const phrase = cell.textContent;
+                const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
+                if (existeDansBanque) {
+                    const safeKey = safeEncode(phrase);
+                    database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
+                }
+            });
         
-        // 2. RECENSEMENT : Chaque joueur envoie ses cases cochées pour CETTE session
-        document.querySelectorAll('.bingo-cell.clicked').forEach(cell => {
-            const phrase = cell.textContent;
-            
-            // VERIFICATION : On ne compte la case que si elle fait partie de la banque officielle
-            const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
-            
-            if (existeDansBanque) {
-                const safeKey = safeEncode(phrase);
-                database.ref(`session_votes/${data.sessionID}/${safeKey}`).set(true);
+            // 2. ALERTES VISUELLES
+            if (!data.isManual) {
+                showWinnerAlert(data.winner, data.isLucky);
             }
-        });
-        });
         
+            // 3. RÉINITIALISATION GÉNÉRALE (Délai pour laisser le temps de voir l'alerte/le bingo)
+        setTimeout(() => {
+            localStorage.removeItem(STORAGE_KEY);
+            // On lance la création avec l'animation Boggle !
+            createBingoCard(true); 
+            
+            if(data.isManual) {
+                alert("La session a été clôturée. Nouvelle grille générée !");
+            }
+        }, data.isManual ? 500 : 5000);
+            
         // B. Afficher l'intégralité des Statistiques basées sur les sessions uniques
         database.ref('session_votes').on('value', (snap) => {
             const allSessions = snap.val() || {};
