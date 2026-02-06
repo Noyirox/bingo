@@ -5,6 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big Problems - Bingo</title>
     <style>
+        @keyframes boggleShake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2px, -2px) rotate(2deg); }
+            50% { transform: translate(-2px, 2px) rotate(-2deg); }
+            75% { transform: translate(2px, 2px) rotate(1deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        .boggle-anim {
+            animation: boggleShake 0.4s ease-in-out;
+            /* On ajoute un délai aléatoire en JS pour l'effet désordonné */
+        }
+        
         #stats-content {
             width: 100%;
             display: flex;
@@ -305,25 +318,27 @@
             }
         
             // --- MÉLANGE & RENDU ---
-            selection = selection.sort(() => Math.random() - 0.5).slice(0, 25);
+            // 6. Génération HTML avec animation Boggle
+        selection.forEach((item, index) => {
+            const cell = document.createElement('div');
+            cell.className = 'bingo-cell boggle-anim'; // Ajout de la classe d'animation
+            cell.textContent = item.p;
+            
+            // Effet de "désordre" : chaque dé s'agite avec un micro-décalage
+            cell.style.animationDelay = (Math.random() * 0.2) + "s";
         
-            selection.forEach(item => {
-                const cell = document.createElement('div');
-                cell.className = 'bingo-cell';
-                cell.textContent = item.p;
-                
-                // Seules les 5 cases du mode fantôme seront pré-cochées
-                if (item.isGift) {
-                    cell.classList.add('clicked');
-                }
+            if (item.isGift) {
+                cell.classList.add('clicked');
+            }
         
-                cell.onclick = function() {
-                    this.classList.toggle('clicked');
-                    localStorage.setItem(STORAGE_KEY, card.innerHTML);
-                    checkWin();
-                };
-                card.appendChild(cell);
-            });
+            cell.onclick = function() {
+                this.classList.toggle('clicked');
+                localStorage.setItem(STORAGE_KEY, card.innerHTML);
+                checkWin();
+            };
+            
+            card.appendChild(cell);
+        });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
         }
