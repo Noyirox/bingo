@@ -282,13 +282,12 @@
         function createBingoCard(withAnimation = false) {
             const card = document.getElementById('bingo-card');
             
+            // 1. Déclenchement de l'animation si nécessaire
             if (withAnimation) {
-                // On ajoute la classe d'animation à toutes les cellules existantes
                 document.querySelectorAll('.bingo-cell').forEach(cell => {
                     cell.classList.add('boggle-anim');
                 });
                 
-                // On attend un petit peu (600ms) avant de réellement changer le contenu
                 setTimeout(() => {
                     renderNewGrid();
                 }, 600);
@@ -296,73 +295,66 @@
                 renderNewGrid();
             }
         
+            // 2. La fonction interne qui construit réellement la grille
             function renderNewGrid() {
                 card.innerHTML = '';
+                
+                // Pool de bonus
+                let bonusPool = [
+                    "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
+                    "🎁", "P'tit bonus", "C'est bien parce que c'est toi", 
+                    "Julian c'est grave un boss, nan ?", "On remercie les absents", "Parce que tu es là"
+                ];
+                bonusPool.sort(() => Math.random() - 0.5);
+        
+                // Filtrage des mots selon les présents
+                const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
+                let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
+                filtrés = filtrés.map(item => ({ ...item, isGift: false }));
+        
+                let finalMots = [];
+        
+                // Logique Absence vs Présence
+                if (presents.length === 0) {
+                    for (let i = 0; i < 5; i++) {
+                        finalMots.push({ p: bonusPool[i] || "Case libre ✨", owner: null, isGift: true });
+                    }
+                    filtrés.sort(() => Math.random() - 0.5);
+                    finalMots = [...finalMots, ...filtrés.slice(0, 20)];
+                } else {
+                    filtrés.sort(() => Math.random() - 0.5);
+                    finalMots = filtrés.slice(0, 25);
+                }
+        
+                // Mélange Fisher-Yates
+                for (let i = finalMots.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [finalMots[i], finalMots[j]] = [finalMots[j], finalMots[i]];
+                }
+        
+                // Création des éléments HTML
+                finalMots.forEach(item => {
+                    const cell = document.createElement('div');
+                    cell.className = 'bingo-cell';
+                    cell.textContent = item.p;
                     
-            // 1. Définition du pool de bonus
-            let bonusPool = [
-                "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
-                "🎁", "P'tit bonus", "C'est bien parce que c'est toi", 
-                "Julian c'est grave un boss, nan ?", "On remercie les absents", "Parce que tu es là"
-            ];
-            bonusPool.sort(() => Math.random() - 0.5);
-
-            // 2. Filtrage des mots selon les présents
-            const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
-            let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
-            
-            // On s'assure que tout est marqué comme "non-cadeau" par défaut
-            filtrés = filtrés.map(item => ({ ...item, isGift: false }));
-
-            let finalMots = [];
-
-            // --- LOGIQUE DES ABSENTS ---
-            if (presents.length === 0) {
-                // PERSONNE N'EST LÀ : On prend 5 bonus + 20 mots de la banque
-                for (let i = 0; i < 5; i++) {
-                    finalMots.push({ p: bonusPool[i] || "Case libre ✨", owner: null, isGift: true });
-                }
-                // On mélange la banque filtrée pour en prendre 20 au hasard
-                filtrés.sort(() => Math.random() - 0.5);
-                finalMots = [...finalMots, ...filtrés.slice(0, 20)];
-            } else {
-                // AU MOINS UN PRÉSENT : Uniquement la banque de mots
-                filtrés.sort(() => Math.random() - 0.5);
-                finalMots = filtrés.slice(0, 25);
-            }
-
-            // 3. Mélange final Fisher-Yates pour répartir les bonus dans la grille
-            for (let i = finalMots.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [finalMots[i], finalMots[j]] = [finalMots[j], finalMots[i]];
-            }
-
-           // 4. Génération HTML des cellules
-            finalMots.forEach(item => {
-                const cell = document.createElement('div');
-                cell.className = 'bingo-cell';
-                cell.textContent = item.p;
-                
-                // Si c'est un bonus, on le coche d'office
-                if (item.isGift) {
-                    cell.classList.add('clicked');
-                }
-    
-                // Gestion du clic sur la cellule
-                cell.onclick = function() {
-                    this.classList.toggle('clicked');
-                    localStorage.setItem(STORAGE_KEY, card.innerHTML);
-                    checkWin();
-                };
-                
-                card.appendChild(cell);
-            });
-    
-            // 5. Sauvegarde et vérification immédiate (pour l'Easter Egg des bonus alignés)
-            localStorage.setItem(STORAGE_KEY, card.innerHTML);
-            checkWin();
-        }
-    }
+                    if (item.isGift) {
+                        cell.classList.add('clicked');
+                    }
+        
+                    cell.onclick = function() {
+                        this.classList.toggle('clicked');
+                        localStorage.setItem(STORAGE_KEY, card.innerHTML);
+                        checkWin();
+                    };
+                    
+                    card.appendChild(cell);
+                });
+        
+                localStorage.setItem(STORAGE_KEY, card.innerHTML);
+                checkWin();
+            } // Fin de renderNewGrid
+        } // Fin de createBingoCard
 
         function checkWin() {
             const cells = Array.from(document.querySelectorAll('.bingo-cell'));
