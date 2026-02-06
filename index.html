@@ -217,19 +217,24 @@
         const staff = ["Aymeric", "Pauline", "Jeremy", "Aurelie", "Alex"];
         const banqueDeMots = [
             { p: "Zoophilie 😻", owner: "Aymeric" }, { p: "Rachel 👽", owner: "Aymeric" }, { p: "H word", owner: "Aymeric" },
-            { p: "Gaetan vient porter les clefs", owner: "Aymeric" }, { p: "Aymeric nous abandonne pour insta", owner: "Aymeric" },
+            { p: "Gaëtan vient porter les clefs", owner: "Aymeric" }, { p: "Aymeric nous abandonne pour insta", owner: "Aymeric" },
             { p: "Gaëtan a une nouvelle aventure dans le train", owner: "Aymeric" }, { p: "Bizutage", owner: "Aymeric" }, { p: "Grosso phobie", owner: "Aymeric" },
-            { p: "Pauline fait le jeu « di »", owner: "Pauline" }, { p: "Les anecdotes de Paupau", owner: "Pauline" }, { p: "Kaamelott 👑", owner: "Pauline" },
-            { p: "Pauline est vieille 👵", owner: "Pauline" }, { p: "Pauline force le bingo", owner: "Pauline" }, { p: "🏰 Château-Double 🏰", owner: "Pauline" },
+            { p: "Pauline fait le jeu « di »", owner: "Pauline" }, { p: "Les anecdotes de Paupau", owner: "Pauline" }, { p: "Kaamelott 👑", owner: null },
+            { p: "Pauline est vieille 👵", owner: "Pauline" }, { p: "Quelqu'un force le bingo", owner: null }, { p: "🏰 Château-Double 🏰", owner: "Pauline" },
             { p: "Jeremy mange de la pizza 🍕", owner: "Jeremy" }, { p: "Jeremy oublie un truc", owner: "Jeremy" }, { p: "Jérémy rajoute du parmesan 🧀", owner: "Jeremy" },
             { p: "Aurélie est pas optimiste", owner: "Aurelie" }, { p: "Aurélie s'est levé tôt 🌅", owner: "Aurelie" }, { p: "Aurélie l'ogre 👹", owner: "Aurelie" },
-            { p: "Problème de famille d'Alex", owner: "Alex" }, { p: "Pedro Pascal", owner: "Alex" },
+            { p: "Problème de famille d'Alex", owner: "Alex" }, { p: "Pedro Pascal", owner: null },
             { p: "Godwin", owner: null }, { p: "Les fachos", owner: null }, { p: "Wrong timing", owner: null }, { p: "Marc", owner: null },
             { p: "Seigneurs des anneaux 🧝", owner: null }, { p: "Sondages / Test", owner: null }, { p: "Titre 🔞", owner: null },
-            { p: "Marie et/ou Maela sont outrées", owner: null }, { p: "Chorale", owner: null }, { p: "Pipouille", owner: null },
+            { p: "Marie et/ou Maéla sont outrées", owner: null }, { p: "Chorale", owner: null }, { p: "Pipouille", owner: null },
             { p: "USA 🇺🇲", owner: null }, { p: "Vol de places", owner: null }, { p: "Romain parle d'IA 🤖", owner: null },
             { p: "Manu ce gros con 🕶️", owner: null }, { p: "Boulette alimentaire 🍝", owner: null }, { p: "Balle perdue 🔫", owner: null },
-            { p: "Problème de train 🚆", owner: null }, { p: "C'est scato 💩", owner: null }, { p: "Marseillais 🤬🏍️", owner: null }
+            { p: "Problème de train 🚆", owner: null }, { p: "C'est scato 💩", owner: null }, { p: "Marseillais 🤬🏍️", owner: null },
+            { p: "Antoine est là !", owner: null }, { p: "Point cuisine 🧑‍🍳", owner: null }, { p: "Expression inventée", owner: null },
+            { p: "Marie met plusieurs couches de sel 🧂", owner: null }, { p: "Premier degré 🌡️", owner: null }, { p: "Maéla juge 👩🏻‍⚖️", owner: null }, { p: "Quelqu'un a du charbon sur le visage 🪵🔥", owner: null },
+            { p: "🐈 Chats / Bébé 👶", owner: null }, { p: "Quelqu’un répète un truc", owner: null }, { p: "On voit une bestiole 🐀", owner: null },
+            { p: "Calvitie évoquée 👴", owner: null }, { p: "Anciens cassos du labo", owner: null }, { p: "Quelqu'un loupe son panier 🏀", owner: null },
+            { p: "T le maudit 🟠", owner: null }, { p: "Les Zommes ♂️", owner: null }, { p: "Caillou 🗿", owner: null }
         ];
 
         // 2. NAVIGATION
@@ -263,42 +268,46 @@
             const card = document.getElementById('bingo-card');
             card.innerHTML = '';
             
-        // 1. Liste des bonus disponibles
+            // 1. Définition du pool de bonus
             let bonusPool = [
                 "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison", 
-                "🎁", "P'tit bonus",
-                "C'est bien parce que c'est toi", "Julian c'est grave un boss, nan ?",
-                "On remercie les absents", "Parce que tu es là"
+                "🎁", "P'tit bonus", "C'est bien parce que c'est toi", 
+                "Julian c'est grave un boss, nan ?", "On remercie les absents", "Parce que tu es là"
             ];
-        
-            // Mélange initial du pool de bonus pour le tirage sans remise
             bonusPool.sort(() => Math.random() - 0.5);
-        
+
             // 2. Filtrage des mots selon les présents
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             let filtrés = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
             
-            // On marque les vraies cases
+            // On s'assure que tout est marqué comme "non-cadeau" par défaut
             filtrés = filtrés.map(item => ({ ...item, isGift: false }));
-        
-            // 3. Compléter si < 25 (Tirage sans remise)
-            if (filtrés.length < 25) {
-                const manquant = 25 - filtrés.length;
-                for (let i = 0; i < manquant; i++) {
-                    // On prend le i-ème élément du pool mélangé
-                    const text = bonusPool[i] || "Case libre ✨"; 
-                    filtrés.push({ p: text, owner: null, isGift: true });
+
+            let finalMots = [];
+
+            // --- LOGIQUE DES ABSENTS ---
+            if (presents.length === 0) {
+                // PERSONNE N'EST LÀ : On prend 5 bonus + 20 mots de la banque
+                for (let i = 0; i < 5; i++) {
+                    finalMots.push({ p: bonusPool[i] || "Case libre ✨", owner: null, isGift: true });
                 }
+                // On mélange la banque filtrée pour en prendre 20 au hasard
+                filtrés.sort(() => Math.random() - 0.5);
+                finalMots = [...finalMots, ...filtrés.slice(0, 20)];
+            } else {
+                // AU MOINS UN PRÉSENT : Uniquement la banque de mots
+                filtrés.sort(() => Math.random() - 0.5);
+                finalMots = filtrés.slice(0, 25);
             }
-            
-            // 4. Mélange final Fisher-Yates pour la grille
-            for (let i = filtrés.length - 1; i > 0; i--) {
+
+            // 3. Mélange final Fisher-Yates pour répartir les bonus dans la grille
+            for (let i = finalMots.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [filtrés[i], filtrés[j]] = [filtrés[j], filtrés[i]];
+                [finalMots[i], finalMots[j]] = [finalMots[j], finalMots[i]];
             }
-        
-            // 5. Génération HTML
-            filtrés.slice(0, 25).forEach(item => {
+
+            // 4. Génération HTML
+            finalMots.forEach(item => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell';
                 cell.textContent = item.p;
@@ -306,7 +315,7 @@
                 if (item.isGift) {
                     cell.classList.add('clicked');
                 }
-        
+
                 cell.onclick = function() {
                     this.classList.toggle('clicked');
                     localStorage.setItem(STORAGE_KEY, card.innerHTML);
@@ -314,7 +323,7 @@
                 };
                 card.appendChild(cell);
             });
-        
+
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
             checkWin(); 
         }
