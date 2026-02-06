@@ -317,49 +317,55 @@
                 togglePresencePanel(); // Ferme le panneau après création
             }
         }
-        
+
         function createBingoCard() {
             const card = document.getElementById('bingo-card');
-            if (!card) return; // Sécurité
+            if (!card) return;
             card.innerHTML = ''; 
             
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             
-            // 1. Filtrer la banque de mots
-            let basePool = [];
+            let finalSelection = [];
+            let poolBonus = ["✨", "🎁", "🍀", "🍻", "💎", "🃏", "⭐", "🚀"].sort(() => Math.random() - 0.5);
+        
             if (presents.length === 0) {
-                basePool = banqueDeMots.filter(m => !m.owner);
+                // --- CAS : PERSONNE COCHÉ ---
+                // 1. On prend les phrases sans owner (max 20)
+                let sansOwner = banqueDeMots.filter(m => !m.owner).sort(() => Math.random() - 0.5);
+                finalSelection = sansOwner.slice(0, 20).map(item => ({ p: item.p, isGift: false }));
+        
+                // 2. On ajoute obligatoirement 5 bonus
+                for (let i = 0; i < 5; i++) {
+                    finalSelection.push({ p: poolBonus[i], isGift: true });
+                }
             } else {
-                basePool = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner));
+                // --- CAS : AVEC PRÉSENTS ---
+                // On prend tout ce qui est éligible (sans owner + les cochés)
+                let eligible = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner)).sort(() => Math.random() - 0.5);
+                
+                // On prend les 25 premières
+                finalSelection = eligible.slice(0, 25).map(item => ({ p: item.p, isGift: false }));
             }
         
-            // Mélange et sélection de 20 mots maximum
-            basePool.sort(() => Math.random() - 0.5);
-            let finalSelection = basePool.slice(0, 20).map(item => ({ p: item.p, isGift: false }));
-        
-            // 2. Ajout des 5 bonus garantis (isGift: true pour qu'ils soient cochés d'office)
-            let icons = ["✨", "🎁", "🍀", "🍻", "💎", "🃏", "⭐", "🚀"].sort(() => Math.random() - 0.5);
-            for (let i = 0; i < 5; i++) {
-                finalSelection.push({ p: icons[i], isGift: true });
-            }
-        
-            // 3. Complétion si la banque de mots sans owner était trop petite (moins de 20)
+            // --- SÉCURITÉ : REMPLISSAGE SI < 25 ---
+            // Si après les étapes précédentes on n'a toujours pas 25 cases (manque de phrases)
             if (finalSelection.length < 25) {
+                let j = 0;
                 while (finalSelection.length < 25) {
-                    finalSelection.push({ p: "Case libre ✨", isGift: true });
+                    finalSelection.push({ p: "Case libre " + (poolBonus[j % poolBonus.length]), isGift: true });
+                    j++;
                 }
             }
         
-            // 4. Mélange final pour répartir les bonus partout
+            // Mélange final
             finalSelection.sort(() => Math.random() - 0.5);
         
-            // 5. Création des éléments
+            // Génération des cellules
             finalSelection.forEach((item, index) => {
                 const cell = document.createElement('div');
                 cell.className = 'bingo-cell shuffle-anim';
                 cell.textContent = item.p;
         
-                // Variables pour l'animation Boggle
                 cell.style.setProperty('--tw', (Math.random() - 0.5) * 300 + "px");
                 cell.style.setProperty('--th', (Math.random() - 0.5) * 300 + "px");
                 cell.style.setProperty('--tr', (Math.random() - 0.5) * 500 + "deg");
