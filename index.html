@@ -4,20 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big Problems - Bingo</title>
-    <style>
-        @keyframes boggleShake {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(2px, -2px) rotate(2deg); }
-            50% { transform: translate(-2px, 2px) rotate(-2deg); }
-            75% { transform: translate(2px, 2px) rotate(1deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
-        }
-        
-        .boggle-anim {
-            animation: boggleShake 0.4s ease-in-out;
-            /* On ajoute un délai aléatoire en JS pour l'effet désordonné */
-        }
-        
+    <style>        
         #stats-content {
             width: 100%;
             display: flex;
@@ -87,10 +74,37 @@
 
         /* --- Bingo Card & Cells --- */
         #bingo-card {
-            display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(5, 1fr);
-            grid-gap: 3px; width: 100%; max-width: 450px; aspect-ratio: 1 / 1;
-            background-color: #ccc; padding: 5px; border-radius: 10px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr); /* Force 5 lignes */
+            grid-gap: 5px;
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+            background-color: #ccc;
+            padding: 8px;
+            border-radius: 12px;
+            overflow: hidden; /* Empêche les cases de sortir du cadre pendant l'animation */
         }
+        
+        /* Animation Boggle */
+        @keyframes bogglePop {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            70% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        @keyframes boggleShake {
+            0%, 100% { transform: translate(0,0); }
+            25% { transform: translate(1px, -1px) rotate(1deg); }
+            75% { transform: translate(-1px, 1px) rotate(-1deg); }
+        }
+        
+        .boggle-anim {
+            animation: bogglePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both, 
+                       boggleShake 0.1s 4 linear 0.4s; /* Secousse juste APRES le pop */
+        }
+        
         .bingo-cell {
             background-color: #fff; border-radius: 4px; display: flex;
             align-items: center; justify-content: center; text-align: center;
