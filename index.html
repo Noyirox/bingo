@@ -276,69 +276,65 @@
                 togglePresencePanel(); // Ferme le panneau après création
             }
         }
-
+        
         function createBingoCard() {
             const card = document.getElementById('bingo-card');
-            card.innerHTML = '';
+            card.innerHTML = ''; // On vide TOUT avant de commencer
             
-            let bonusPool = [
-                "Si tu lis ça, tu me dois une bière 🍻", "De la part de la maison 🎁", 
-                "P'tit bonus ✨", "C'est bien parce que c'est toi", 
-                "Julian c'est grave un boss, nan ?", "On remercie les absents", 
-                "Parce que tu es là", "Une case offerte ! 🍀",
-                "Offert par la direction", "Cadeau du ciel ☁️"
-            ];
-            bonusPool.sort(() => Math.random() - 0.5);
-        
             const presents = Array.from(document.querySelectorAll('.presence-check:checked')).map(cb => cb.value);
             
             let selection = [];
         
-            // --- LOGIQUE CONDITIONNELLE ---
+            // --- LOGIQUE DE SELECTION (Idée 1) ---
             if (presents.length === 0) {
-                // MODE FANTÔME : Personne n'est là, on force le mode chance
-                // On prend 5 bonus qu'on marquera comme gagnants
+                // Mode Fantôme : 5 bonus garantis
+                let bonusForLuck = ["✨", "🎁", "🍀", "🍻", "💎"].sort(() => Math.random() - 0.5);
                 for (let i = 0; i < 5; i++) {
-                    selection.push({ p: bonusPool.pop(), owner: null, isGift: true });
+                    selection.push({ p: bonusForLuck[i], isGift: true });
                 }
             } else {
-                // MODE NORMAL : On filtre la banque par les présents
                 selection = banqueDeMots
                     .filter(m => !m.owner || presents.includes(m.owner))
                     .map(item => ({ ...item, isGift: false }));
             }
         
-            // --- COMPLÉTION ---
-            // Si on a moins de 25 (parce que pas assez de phrases ou mode fantôme)
-            // On complète avec le reste du pool bonus, mais SANS les cocher auto (isGift: false)
-            // Sauf si on est en mode fantôme, on peut décider de les cocher ou non.
-            while (selection.length < 25) {
-                const text = bonusPool.length > 0 ? bonusPool.pop() : "Case libre ✨";
-                selection.push({ p: text, owner: null, isGift: false }); 
+            // Mélange initial de la banque
+            selection.sort(() => Math.random() - 0.5);
+        
+            // --- COMPLÉTION À 25 STRICT ---
+            // Si on a plus de 25, on coupe. Si on a moins, on ajoute des cases vides/bonus.
+            if (selection.length > 25) {
+                selection = selection.slice(0, 25);
+            } else {
+                while (selection.length < 25) {
+                    selection.push({ p: "Case libre ✨", isGift: false });
+                }
             }
         
-            // --- MÉLANGE & RENDU ---
-            // 6. Génération HTML avec animation Boggle
-        selection.forEach((item, index) => {
-            const cell = document.createElement('div');
-            cell.className = 'bingo-cell boggle-anim'; // Ajout de la classe d'animation
-            cell.textContent = item.p;
-            
-            // Effet de "désordre" : chaque dé s'agite avec un micro-décalage
-            cell.style.animationDelay = (Math.random() * 0.2) + "s";
+            // --- MÉLANGE FINAL (Boggle style) ---
+            selection.sort(() => Math.random() - 0.5);
         
-            if (item.isGift) {
-                cell.classList.add('clicked');
-            }
+            // --- GÉNÉRATION DES CELLS ---
+            selection.forEach((item, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'bingo-cell boggle-anim'; // On ajoute l'animation
+                cell.textContent = item.p;
+                
+                // Délai aléatoire pour que chaque "dé" bouge indépendamment
+                cell.style.animationDelay = (Math.random() * 0.3) + "s";
         
-            cell.onclick = function() {
-                this.classList.toggle('clicked');
-                localStorage.setItem(STORAGE_KEY, card.innerHTML);
-                checkWin();
-            };
-            
-            card.appendChild(cell);
-        });
+                if (item.isGift) {
+                    cell.classList.add('clicked');
+                }
+        
+                cell.onclick = function() {
+                    this.classList.toggle('clicked');
+                    localStorage.setItem(STORAGE_KEY, card.innerHTML);
+                    checkWin();
+                };
+                
+                card.appendChild(cell);
+            });
         
             localStorage.setItem(STORAGE_KEY, card.innerHTML);
         }
