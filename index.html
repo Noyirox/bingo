@@ -22,14 +22,14 @@
         #hof-content {
             width: 100%;
             max-width: 450px;
-            max-height: 25vh; /* Limite à 25% de l'écran */
+            max-height: 30vh; /* Limite à 25% de l'écran */
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px; /* Espace crucial pour ne pas chevaucher le titre suivant */
+            gap: 6px;
+            margin-bottom: 5px; /* Espace crucial pour ne pas chevaucher le titre suivant */
         }
-                
+                        
         /* Style des lignes de classement */
         .hof-row {
             display: flex;
@@ -69,6 +69,21 @@
             padding: 2px 10px;
             border-radius: 20px;
             font-size: 0.9rem;
+        }
+
+        /* --- LA BARRE GRISE (À la place du point) --- */
+        .section-divider {
+            width: 60%; /* Pas trop large pour rester élégant */
+            height: 1px;
+            background-color: #eee; /* Gris très clair */
+            border: none;
+            margin: 3px 0; /* Un petit peu d'espace au dessus/dessous */
+        }
+
+        /* --- TITRE TOP CASES --- */
+        #hof-panel h1:nth-of-type(2) {
+            margin-top: 5px; /* On colle le titre à la barre */
+            margin-bottom: 10px;
         }
 
         /* --- ZONE STATS --- */
@@ -271,15 +286,25 @@
     
     <div id="hof-panel">
         <button id="admin-reset-hof" onclick="resetHof()">Réinitialiser la saison</button>
+    
         <h1>🏆 Podium des Champions 🏆</h1>
         <div id="hof-content"></div>
-        
-        <hr class="section-divider">
-        
-        <h2 style="margin-top: 20px;">🔥 Top Cases 🔥</h2>
-        <div id="stats-content"> </div>
     
-        <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px; border-radius: 50px; border: 1px solid #ddd; cursor: pointer;">Fermer</button>
+        <div class="section-divider"></div>
+    
+        <h1 style="margin-top: 5px; margin-bottom: 10px;">🔥 Top Cases 🔥</h1>
+        <div id="stats-content"></div>
+    
+        <button onclick="closeHOF()" style="
+            margin-top: 20px; 
+            padding: 12px 30px; 
+            border-radius: 50px; 
+            border: 1px solid #ddd; 
+            background: #f8f9fa;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+        ">Fermer</button>
     </div>
     
     <button id="session-lock-btn" onclick="manualCloseSession()" title="Clôturer la session">🔒</button>
