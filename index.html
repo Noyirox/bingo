@@ -56,12 +56,21 @@
         
         .player-name {
             font-size: 0.95rem;
-            white-space: nowrap;     /* Empêche le retour à la ligne */
-            overflow: hidden;        /* Cache ce qui dépasse */
-            text-overflow: ellipsis; /* Ajoute les trois petits points (...) */
-            max-width: 140px;        /* Limite la largeur du texte (à ajuster selon tes goûts) */
-            display: block;          /* Nécessaire pour que overflow fonctionne */
-            cursor: help;            /* Change le curseur pour indiquer une info au survol */
+            white-space: nowrap;     /* On garde l'ellipse par défaut */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;        /* Ta limite de caractères */
+            display: block;
+            cursor: pointer;         /* Changé 'help' en 'pointer' pour inviter au clic */
+            transition: max-width 0.2s ease; /* Optionnel : pour un effet fluide */
+            outline: none;           /* Retire le contour bleu sur certains mobiles */
+        }
+        
+        /* L'état quand on clique/touche */
+        .player-name.expanded {
+            white-space: normal;    /* Le texte passe à la ligne */
+            max-width: 100%;        /* Plus de limite de largeur */
+            overflow: visible;      /* On affiche tout */
         }
         
         /* Couleurs spécifiques pour le podium */
@@ -690,7 +699,7 @@
                 .map(n => ({name: n, count: scores[n]}))
                 .sort((a,b) => b.count - a.count);
         
-            // 3. Génération du HTML avec médailles pour le Top 3 et gestion des noms longs
+            // 3. Génération du HTML avec médailles et interactivité clic
             content.innerHTML = ranking.map((w, i) => {
                 let icon = '👤';
                 let specialClass = '';
@@ -703,7 +712,13 @@
                     <div class="hof-row ${specialClass}">
                         <div class="hof-rank-name">
                             <span class="medal-icon">${icon}</span>
-                            <span class="player-name" title="${w.name}">${w.name}</span>
+                            <span class="player-name" 
+                                  title="${w.name}" 
+                                  tabindex="0"
+                                  onclick="this.classList.toggle('expanded')"
+                                  onblur="this.classList.remove('expanded')">
+                                ${w.name}
+                            </span>
                         </div>
                         <div class="player-score">
                             ${w.count} <small>victoire${w.count > 1 ? 's' : ''}</small>
