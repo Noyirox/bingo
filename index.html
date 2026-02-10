@@ -4,7 +4,53 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big Problems - Bingo</title>
-    <style>        
+    <style>
+        /* Conteneur principal du HoF */
+        #hof-content {
+            max-height: 185px; /* Hauteur pour ~3.5 éléments (donne un indice visuel qu'on peut scroller) */
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            /* Custom Scrollbar pour mobile */
+            scrollbar-width: thin;
+            scrollbar-color: #4CAF50 #f0f0f0;
+        }
+        
+        /* Style des lignes de classement */
+        .hof-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 10px;
+            border-left: 5px solid #ccc;
+            flex-shrink: 0; /* Important pour que les lignes ne s'écrasent pas */
+        }
+        
+        /* Couleurs spécifiques pour le podium */
+        .hof-row.gold { border-left-color: #FFD700; background: #fffdf0; font-weight: bold; }
+        .hof-row.silver { border-left-color: #C0C0C0; }
+        .hof-row.bronze { border-left-color: #CD7F32; }
+        
+        .hof-rank-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .medal-icon { font-size: 1.2rem; }
+        
+        .player-score {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
         #stats-content {
             width: 100%;
             display: flex;
@@ -573,32 +619,47 @@
         document.addEventListener('DOMContentLoaded', () => {
             renderPresenceList();
             
-            // Hall of Fame Listener
+        // --- LISTENER DU HALL OF FAME (CHAMPIONS) ---
         database.ref('winners').on('value', (snap) => {
             const data = snap.val();
             const content = document.getElementById('hof-content');
-            if (!data) { content.innerHTML = "Aucun gagnant pour le moment"; return; }
+            if (!data) { 
+                content.innerHTML = "<div style='text-align:center; opacity:0.6; padding:20px;'>Aucun champion pour le moment 🏆</div>"; 
+                return; 
+            }
         
+            // 1. On compte les victoires par nom
             const scores = {};
             Object.values(data).forEach(w => scores[w.name] = (scores[w.name] || 0) + 1);
-            const ranking = Object.keys(scores).map(n => ({name: n, count: scores[n]})).sort((a,b) => b.count - a.count);
+            
+            // 2. On transforme en tableau et on trie (plus grand score en premier)
+            const ranking = Object.keys(scores)
+                .map(n => ({name: n, count: scores[n]}))
+                .sort((a,b) => b.count - a.count);
         
+            // 3. Génération du HTML avec médailles pour le Top 3
             content.innerHTML = ranking.map((w, i) => {
-                const medal = i == 0 ? '🥇' : i == 1 ? '🥈' : i == 2 ? '🥉' : '👤';
+                let icon = '👤';
+                let specialClass = '';
+                
+                if (i === 0) { icon = '🥇'; specialClass = 'gold'; }
+                else if (i === 1) { icon = '🥈'; specialClass = 'silver'; }
+                else if (i === 2) { icon = '🥉'; specialClass = 'bronze'; }
+        
                 return `
-                    <div class="hof-item">
-                        <div class="hof-name">
-                            <span>${medal}</span>
-                            <span>${w.name}</span>
+                    <div class="hof-row ${specialClass}">
+                        <div class="hof-rank-name">
+                            <span class="medal-icon">${icon}</span>
+                            <span class="player-name">${w.name}</span>
                         </div>
-                        <div class="hof-score">
-                            ${w.count} victoire${w.count > 1 ? 's' : ''}
+                        <div class="player-score">
+                            ${w.count} <small>victoire${w.count > 1 ? 's' : ''}</small>
                         </div>
                     </div>
                 `;
             }).join('');
         });
-
+            
         const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 document.getElementById('bingo-card').innerHTML = saved;
