@@ -7,13 +7,12 @@
     <style>
         /* Conteneur principal du HoF */
         #hof-content {
-            max-height: 185px; /* Hauteur pour ~3.5 éléments (donne un indice visuel qu'on peut scroller) */
+            max-height: 210px; /* Augmenté pour laisser passer le 3ème nom */
             overflow-y: auto;
             padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            /* Custom Scrollbar pour mobile */
+            gap: 6px; /* Espace réduit entre les lignes */
             scrollbar-width: thin;
             scrollbar-color: #4CAF50 #f0f0f0;
         }
@@ -24,10 +23,20 @@
             justify-content: space-between;
             align-items: center;
             background: #f8f9fa;
-            padding: 12px 15px;
+            padding: 8px 12px; /* Padding vertical réduit de 12px à 8px */
             border-radius: 10px;
             border-left: 5px solid #ccc;
-            flex-shrink: 0; /* Important pour que les lignes ne s'écrasent pas */
+            flex-shrink: 0;
+            min-height: 45px; /* Assure une taille constante */
+        }
+        
+        /* On réduit aussi un peu la taille de la médaille sur mobile si besoin */
+        .medal-icon { 
+            font-size: 1.1rem; 
+        }
+        
+        .player-name {
+            font-size: 0.95rem;
         }
         
         /* Couleurs spécifiques pour le podium */
@@ -40,8 +49,6 @@
             align-items: center;
             gap: 10px;
         }
-        
-        .medal-icon { font-size: 1.2rem; }
         
         .player-score {
             background: #4CAF50;
