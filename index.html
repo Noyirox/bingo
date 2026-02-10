@@ -26,6 +26,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
+            align-items: center; /* Centre toutes les cases horizontalement */
             gap: 6px;
             margin-bottom: 5px; /* Espace crucial pour ne pas chevaucher le titre suivant */
         }
@@ -36,9 +37,14 @@
             justify-content: space-between;
             align-items: center;
             background: #f8f9fa;
-            padding: 5px 12px; /* Padding vertical réduit de 12px à 8px */
+            padding: 5px 12px;
             border-radius: 10px;
             border-left: 5px solid #ccc;
+            
+            /* FIXER LA TAILLE ICI */
+            width: 90%;          /* Elles occupent 90% du conteneur parent */
+            max-width: 350px;    /* Largeur maximale fixe pour ne pas être trop larges sur PC */
+            box-sizing: border-box; 
             flex-shrink: 0;
             min-height: 35px; /* Assure une taille constante */
         }
