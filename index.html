@@ -5,9 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Big Problems - Bingo</title>
     <style>
-        /* Conteneur principal du HoF */
-        #hof-content { background: red; max-height: 20vh; }
+        /* --- LE CONTENEUR GLOBAL (Modifie celui-ci) --- */
+        #hof-panel {
+            position: fixed; 
+            inset: 0; 
+            background: white; 
+            z-index: 5000; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 60px 10px 20px 10px; /* Plus d'espace en haut pour le bouton fermer */
+            overflow-y: hidden; /* On empêche le panneau entier de scroller */
+        }
         
+        /* --- ZONE PODIUM --- */
+        #hof-content {
+            width: 100%;
+            max-width: 450px;
+            max-height: 25vh; /* Limite à 25% de l'écran */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px; /* Espace crucial pour ne pas chevaucher le titre suivant */
+        }
+                
         /* Style des lignes de classement */
         .hof-row {
             display: flex;
@@ -48,8 +70,20 @@
             border-radius: 20px;
             font-size: 0.9rem;
         }
-        
-        #stats-content { background: blue; max-height: 60vh; }
+
+        /* --- ZONE STATS --- */
+        #stats-content {
+            width: 100%;
+            max-width: 450px;
+            max-height: 45vh; /* Plus grand pour les stats */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #f0f2f5; /* Un gris très léger au lieu du bleu flashy */
+            padding: 15px;
+            border-radius: 15px;
+        }
         
         /* --- Styles de base identiques --- */
         body {
@@ -237,12 +271,12 @@
     
     <div id="hof-panel">
         <button id="admin-reset-hof" onclick="resetHof()">Réinitialiser la saison</button>
-        <h2>🏆 Podium des Champions 🏆</h2>
+        <h1>🏆 Podium des Champions 🏆</h1>
         <div id="hof-content"></div>
     
-        <hr style="width:80%; margin:20px 0; opacity:0.2;">
-        <h3>🔥 Top Cases 🔥</h3>
-        <div id="stats-content"></div>
+        <h1 style="margin-top: 20px;">🔥 Top Cases 🔥</h1>
+        <div id="stats-content"> </div>
+    </div>
     
         <button onclick="closeHOF()" style="margin-top:20px; padding: 10px 20px; border-radius: 50px; border: 1px solid #ddd; cursor: pointer;">Fermer</button>
     </div>
