@@ -258,7 +258,25 @@
             box-sizing: border-box;
             border: 1px solid rgba(0,0,0,0.05);
         }
-
+        
+        #edit-name-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px; /* À l'opposé du bouton réinitialiser */
+            background: #e3f2fd; 
+            color: #1976d2; 
+            border: none; 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+        #edit-name-btn:hover { background: #bbdefb; }
+        
         .hof-name {
             font-weight: 700;
             font-size: 1rem;
@@ -309,7 +327,8 @@
     
     <div id="hof-panel">
         <button id="admin-reset-hof" onclick="resetHof()">Réinitialiser la saison</button>
-    
+        <button id="edit-name-btn" onclick="changePlayerName()">✏️ Pseudo</button>
+        
         <h1>🏆 Podium des Champions 🏆</h1>
         <div id="hof-content"></div>
     
@@ -364,6 +383,37 @@
                 }).join(''));
             } catch(e) { return atob(str); } // Repli si l'ancien format est encore là
         }
+
+        async function changePlayerName() {
+            let newName = prompt("Choisis un pseudo pour le Hall of Fame :");
+            if (!newName) return;
+            newName = formatName(newName.trim()); // Utilise ta fonction pour mettre en propre
+        
+            // On va fouiller dans Firebase pour voir si ce nom existe déjà
+            const usersSnap = await database.ref('users').once('value');
+            const allUsers = usersSnap.val() || {};
+            
+            // On cherche si un autre ID possède déjà ce nom
+            let existingID = Object.keys(allUsers).find(id => allUsers[id].name === newName);
+        
+            if (existingID && existingID !== currentUserID) {
+                // Le nom existe déjà ailleurs !
+                if (confirm(`Le pseudo "${newName}" appartient déjà à quelqu'un. Est-ce bien toi ?`)) {
+                    // L'utilisateur confirme : on lie son appareil à l'ancien ID
+                    currentUserID = existingID;
+                    localStorage.setItem('bingo_user_id', currentUserID);
+                    alert(`Bon retour, ${newName} !`);
+                } else {
+                    alert("Merci de choisir un autre pseudo.");
+                    return;
+                }
+            } else {
+                // Nouveau nom ou simple mise à jour : on enregistre dans la table "users"
+                database.ref(`users/${currentUserID}`).set({ name: newName });
+                alert(`Pseudo enregistré : ${newName}`);
+            }
+        }
+        
         // 1. CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyCoj07_H212qNd1oe_-mUdZrjrYh0Js4fA", 
@@ -401,6 +451,15 @@
             { p: "Quiproquo", owner: null }
         ];
 
+        // On regarde si cet appareil a déjà un ID stocké
+        let currentUserID = localStorage.getItem('bingo_user_id');
+        
+        // Si non (première visite), on en crée un nouveau
+        if (!currentUserID) {
+            currentUserID = "U_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('bingo_user_id', currentUserID);
+        }
+        
         // 2. NAVIGATION
         function togglePresencePanel() {
             const panel = document.getElementById('presence-settings');
@@ -509,7 +568,6 @@
             const isClicked = i => cells[i].classList.contains('clicked');
             const wins = [[0,1,2,3,4],[5,6,7,8,9],[10,11,12,13,14],[15,16,17,18,19],[20,21,22,23,24],[0,5,10,15,20],[1,6,11,16,21],[2,7,12,17,22],[3,8,13,18,23],[4,9,14,19,24],[0,6,12,18,24],[4,8,12,16,20]];
             
-            // On cherche si une ligne gagnante existe
             const winningCombo = wins.find(c => c.every(isClicked));
         
             if (winningCombo) {
@@ -517,8 +575,6 @@
                 if (msg.classList.contains('show')) return;
                 
                 // --- DETECTION EASTER EGG ---
-                // On vérifie si TOUTES les cases de la combinaison gagnante sont des bonus
-                // Dans ton code, les bonus n'ont pas la clé .owner ou sont marqués isGift
                 const isFullLuck = winningCombo.every(index => {
                     const txt = cells[index].textContent;
                     return !banqueDeMots.some(m => m.p === txt); 
@@ -531,34 +587,52 @@
                     msg.innerHTML = "BINGO !";
                     msg.style.background = "linear-gradient(45deg, #ff00cc, #3333ff)";
                 }
-                // ----------------------------
         
                 msg.classList.add('show');
                 triggerConfetti();
         
-                setTimeout(() => {
-                    let name = prompt(isFullLuck ? "Incroyable ! 5 cases bonus alignées ! Quel est ton nom, Élu·e :" : "BINGO ! Ton nom :");
-                    if (name) {
-                        const cleanName = formatName(name.trim());
-                        const now = Date.now();
-                        const sessionID = "S_" + Math.random().toString(36).substr(2, 9);
+                // --- NOUVELLE LOGIQUE DE NOM AUTOMATIQUE ---
+                setTimeout(async () => {
+                    // 1. On récupère les infos de l'utilisateur dans Firebase
+                    const userSnap = await database.ref(`users/${currentUserID}`).once('value');
+                    const userData = userSnap.val();
+                    let finalName = userData ? userData.name : null;
+        
+                    // 2. Si on ne connaît pas son nom, on lui demande (une seule fois)
+                    if (!finalName) {
+                        const promptMsg = isFullLuck 
+                            ? "Incroyable ! 5 cases bonus alignées ! Quel est ton nom, Élu·e :" 
+                            : "BINGO ! Quel est ton nom pour le podium ?";
                         
-                        // Si c'est un coup de chance, on ajoute un suffixe au nom pour le podium
-                        const displayName = isFullLuck ? `${cleanName} 🍀` : cleanName;
-        
-                        database.ref('winners').push({ 
-                            name: displayName, 
-                            timestamp: now,
-                            lucky: isFullLuck // On garde l'info en base au cas où
-                        });
-        
-                        database.ref('bingo_signal').set({
-                            winner: displayName,
-                            timestamp: now,
-                            sessionID: sessionID,
-                            isLucky: isFullLuck
-                        });
+                        // On appelle la fonction de changement de nom qu'on a créée
+                        await changePlayerName(promptMsg); 
+                        
+                        // On récupère le nom fraîchement enregistré
+                        const updatedSnap = await database.ref(`users/${currentUserID}`).once('value');
+                        finalName = updatedSnap.val() ? updatedSnap.val().name : "Anonyme";
                     }
+        
+                    // 3. On prépare l'affichage (ajout du trèfle si Easter Egg)
+                    const displayName = isFullLuck ? `${finalName} 🍀` : finalName;
+                    const now = Date.now();
+                    const sessionID = "S_" + Math.random().toString(36).substr(2, 9);
+        
+                    // 4. Enregistrement de la victoire
+                    database.ref('winners').push({ 
+                        name: displayName, 
+                        userID: currentUserID,
+                        timestamp: now,
+                        lucky: isFullLuck 
+                    });
+        
+                    // 5. Signal pour les autres joueurs (stats)
+                    database.ref('bingo_signal').set({
+                        winner: displayName,
+                        timestamp: now,
+                        sessionID: sessionID,
+                        isLucky: isFullLuck
+                    });
+        
                     msg.classList.remove('show');
                 }, 2600);
             }
