@@ -96,7 +96,7 @@
 
         /* --- LA BARRE GRISE (À la place du point) --- */
         .section-divider {
-            : 60%; /* Pas trop large pour rester élégant */
+            width: 60%; /* Pas trop large pour rester élégant */
             height: 1px;
             background: #f0f2f5; /* Gris clair */
             border: none;
@@ -227,7 +227,7 @@
             left: 0;
             top: 0;
             width: 100vw;
-            height: 72px;
+            height: 100vh;
         }
 
         .metazooa-footprint {
@@ -446,6 +446,259 @@
             cursor: pointer;
             font-weight: 700;
         }
+
+        #add-case-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #add-case-overlay.active { display: flex; }
+
+        #add-case-panel {
+            width: min(520px, 92vw);
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+
+        #add-case-panel h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: #222;
+        }
+
+        #add-case-panel label {
+            display: block;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #444;
+            margin: 10px 0 6px;
+        }
+
+        #add-case-panel input,
+        #add-case-panel select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e1e4e8;
+            font-size: 0.95rem;
+        }
+
+        .panel-actions {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        #add-case-cancel,
+        #add-case-submit {
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        #add-case-cancel { background: #e9ecef; color: #333; }
+        #add-case-submit { background: #111; color: #fff; }
+
+        #manage-words-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 8000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #manage-words-overlay.active { display: flex; }
+
+        #manage-words-panel {
+            width: min(720px, 95vw);
+            max-height: 85vh;
+            background: #fff;
+            border-radius: 16px;
+            padding: 18px 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #manage-words-panel h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #222;
+        }
+
+        #toast {
+            position: fixed;
+            left: 50%;
+            bottom: 24px;
+            transform: translateX(-50%);
+            background: #111;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 9000;
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-4px);
+        }
+
+        #toast.center {
+            top: 50%;
+            bottom: auto;
+            transform: translate(-50%, -50%) scale(0.98);
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+        }
+
+        #toast.center.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        #words-search {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e1e4e8;
+            font-size: 0.95rem;
+            color: #111;
+            background: #fff;
+        }
+
+        #owners-section {
+            display: grid;
+            gap: 8px;
+        }
+
+        #owners-add {
+            display: flex;
+            gap: 8px;
+        }
+
+        #add-owner-input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #e1e4e8;
+            font-size: 0.95rem;
+        }
+
+        #add-owner-btn {
+            border: none;
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            background: #111;
+            color: #fff;
+        }
+
+        #owners-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .owner-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f3f5;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        .owner-delete {
+            border: none;
+            background: #ffebee;
+            color: #c62828;
+            border-radius: 999px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        #words-list {
+            overflow: auto;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #fafafa;
+        }
+
+        .word-row {
+            display: grid;
+            grid-template-columns: 1fr 140px auto auto;
+            gap: 8px;
+            align-items: center;
+            background: #fff;
+            border: 1px solid #e7e7e7;
+            border-radius: 10px;
+            padding: 8px;
+        }
+
+        .word-row input,
+        .word-row select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+            font-size: 0.9rem;
+            color: #111;
+            background: #fff;
+        }
+
+        .word-save,
+        .word-delete {
+            border: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .word-save { background: #4879ff; color: #fff; }
+        .word-delete { background: #ffebee; color: #c62828; }
+
+        @media (max-width: 640px) {
+            .word-row {
+                grid-template-columns: 1fr;
+            }
+
+            .word-save,
+            .word-delete {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -460,11 +713,49 @@
                 <li>Stats des cases en direct avec pourcentages.</li>
                 <li>Chaque Bingo (ou clotûre manuelle) termine la session en cours et réinitialise la grille pour tous.</li>
                 <li>Nouvelle session automatique chaque jour à 5h du mat' si la précédente n'était pas cloturée.</li>
-                <li>Ajout d'un raccourci vers Metazooa.</li>
+                <li>Possibilité d'ajouter de nouvelles cases et de modifier les existantes.</li>
             </ul>
             <button id="whats-new-close" onclick="closeWhatsNew()">OK, compris</button>
         </div>
     </div>
+
+    <div id="add-case-overlay">
+        <div id="add-case-panel">
+            <h3>Ajouter une case</h3>
+            <label for="add-case-text">Texte de la case</label>
+            <input id="add-case-text" type="text" maxlength="80" placeholder="Ex: Nouveau sujet...">
+            <label for="add-case-owner">Owner (optionnel)</label>
+            <select id="add-case-owner">
+                <option value="">Aucun</option>
+            </select>
+            <label for="add-case-owner-free">Owner libre (optionnel)</label>
+            <input id="add-case-owner-free" type="text" maxlength="30" placeholder="Ex: Nouveau owner">
+            <div class="panel-actions">
+                <button id="add-case-cancel" onclick="closeAddCasePanel()">Annuler</button>
+                <button id="add-case-submit" onclick="submitAddCase()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="manage-words-overlay">
+        <div id="manage-words-panel">
+            <h3>Banque de mots (édition)</h3>
+            <input id="words-search" type="text" placeholder="Rechercher une case ou un owner">
+            <div id="owners-section">
+                <div id="owners-add">
+                    <input id="add-owner-input" type="text" maxlength="30" placeholder="Ajouter un owner">
+                    <button id="add-owner-btn" onclick="addOwner()">Ajouter</button>
+                </div>
+                <div id="owners-list"></div>
+            </div>
+            <div id="words-list"></div>
+            <div class="panel-actions">
+                <button id="manage-words-close" onclick="closeManageWords()">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"></div>
     
     <div id="presence-settings">
         <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -475,6 +766,8 @@
         <div id="check-list" class="check-grid"></div>
         
         <button id="generate-btn" onclick="confirmAndGenerate()">GÉNÉRER LA GRILLE</button>
+        <button id="add-case-btn" onclick="openAddCasePanel()" style="margin-top:10px; border:none; background:#111; color:#fff; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:700; width:100%;">Ajouter une case</button>
+        <button id="manage-words-btn" onclick="openManageWords()" style="margin-top:10px; border:none; background:#e9ecef; color:#111; padding:10px 12px; border-radius:8px; cursor:pointer; font-weight:700; width:100%;">Voir / Modifier la banque</button>
     </div>
     
     <div id="hof-panel">
@@ -753,15 +1046,19 @@
         const database = firebase.database();
         const STORAGE_KEY = 'bingo_save_v1';
         const WHATS_NEW_KEY = 'bingo_whats_new_v2';
-        const staff = ["Aymeric", "Pauline", "Jeremy", "Aurelie", "Alex"];
-        const banqueDeMots = [
+        const FORCE_WHATS_NEW_KEY = 'bingo_force_whats_new_v1';
+        const APP_VERSION_KEY = 'bingo_app_version';
+        let updateReloadPending = false;
+        const seedStaff = ["Aymeric", "Pauline", "Jérémy", "Aurélie", "Alex"];
+        let staffCache = [];
+        const seedWords = [
             { p: "Zoophilie 😻", owner: "Aymeric" }, { p: "Rachel 👽", owner: "Aymeric" }, { p: "H word", owner: "Aymeric" },
             { p: "Gaëtan vient porter les clefs 🔑", owner: "Aymeric" }, { p: "Aymeric nous abandonne pour insta", owner: "Aymeric" },
             { p: "Gaëtan a une nouvelle aventure dans le train", owner: "Aymeric" }, { p: "Bizutage", owner: "Aymeric" }, { p: "Grosso phobie", owner: "Aymeric" },
             { p: "Pauline fait le jeu « di »", owner: "Pauline" }, { p: "Les anecdotes de Paupau", owner: "Pauline" },
             { p: "Pauline est vieille 👵", owner: "Pauline" }, { p: "Quelqu'un force le bingo", owner: null }, { p: "🏰 Château-Double 🏰", owner: "Pauline" },
-            { p: "Jeremy mange de la pizza 🍕", owner: "Jeremy" }, { p: "Jeremy oublie un truc", owner: "Jeremy" }, { p: "Jérémy rajoute du parmesan 🧀", owner: "Jeremy" },
-            { p: "Aurélie est pas optimiste", owner: "Aurelie" }, { p: "Aurélie s'est levé tôt 🌅", owner: "Aurelie" }, { p: "Aurélie l'ogre 👹", owner: "Aurelie" },
+            { p: "Jérémy mange de la pizza 🍕", owner: "Jérémy" }, { p: "Jérémy oublie un truc", owner: "Jérémy" }, { p: "Jérémy rajoute du parmesan 🧀", owner: "Jérémy" },
+            { p: "Aurélie est pas optimiste", owner: "Aurélie" }, { p: "Aurélie s'est levé tôt 🌅", owner: "Aurélie" }, { p: "Aurélie l'ogre 👹", owner: "Aurélie" },
             { p: "Problème de famille d'Alex", owner: "Alex" }, { p: "Pedro Pascal", owner: null },
             { p: "Godwin", owner: null }, { p: "Les fachos", owner: null }, { p: "Wrong timing", owner: null }, { p: "Marc", owner: null },
             { p: "Sondages / Test / Jeu", owner: null }, { p: "Titre 🔞", owner: null },
@@ -774,9 +1071,12 @@
             { p: "🐈 Chats / Bébé 👶", owner: null }, { p: "Quelqu’un répète un truc", owner: null }, { p: "On voit une bestiole 🐀", owner: null },
             { p: "Calvitie évoquée 👴", owner: null }, { p: "Anciens cassos du labo", owner: null }, { p: "Quelqu'un loupe son panier 🏀", owner: null },
             { p: "T le maudit", owner: null }, { p: "Les Zommes ♂️", owner: null }, { p: "Caillou 🗿", owner: null },
-            { p: "Question con", owner: null }, { p: "On mange trop tard pour Aurélie", owner: "Aurelie" }, { p: "Une réf culturelle 👑🧝🐺", owner: null },
+            { p: "Question con", owner: null }, { p: "On mange trop tard pour Aurélie", owner: "Aurélie" }, { p: "Une réf culturelle 👑🧝🐺", owner: null },
             { p: "Quiproquo", owner: null }, { p: "Administration française 🇫🇷", owner: null }
         ];
+        let wordsCache = [];
+        let wordsSearchQuery = '';
+        const getAllWords = () => wordsCache;
         
         // 2. NAVIGATION
         function togglePresencePanel() {
@@ -788,16 +1088,330 @@
         }
 
         function showWhatsNewOnce() {
-            if (localStorage.getItem(WHATS_NEW_KEY)) return;
             const overlay = document.getElementById('whats-new-overlay');
             if (!overlay) return;
+            if (localStorage.getItem(FORCE_WHATS_NEW_KEY)) {
+                localStorage.removeItem(FORCE_WHATS_NEW_KEY);
+                overlay.classList.add('active');
+                return;
+            }
+            if (localStorage.getItem(WHATS_NEW_KEY)) return;
             overlay.classList.add('active');
         }
 
+        function showUpdatePanel() {
+            const overlay = document.getElementById('whats-new-overlay');
+            if (!overlay) return;
+            const panel = document.getElementById('whats-new-panel');
+            const title = panel ? panel.querySelector('h2') : null;
+            const list = panel ? panel.querySelector('ul') : null;
+            const btn = document.getElementById('whats-new-close');
+
+            if (title) title.textContent = 'Mise a jour disponible !';
+            if (list) {
+                list.innerHTML = '<li>Une nouvelle version est disponible.</li><li>Clique sur Recharger pour appliquer la mise a jour.</li>';
+            }
+            if (btn) btn.textContent = 'Recharger';
+            overlay.classList.add('active');
+        }
+
+        function startVersionListener() {
+            database.ref('app_version').on('value', (snap) => {
+                const remote = snap.val();
+                if (!remote) return;
+                const remoteStr = String(remote);
+                const seen = localStorage.getItem(APP_VERSION_KEY);
+                if (!seen) {
+                    localStorage.setItem(APP_VERSION_KEY, remoteStr);
+                    return;
+                }
+                if (seen !== remoteStr) {
+                    localStorage.setItem(APP_VERSION_KEY, remoteStr);
+                    if (updateReloadPending) return;
+                    updateReloadPending = true;
+                    showUpdatePanel();
+                }
+            });
+        }
+
         function closeWhatsNew() {
-            localStorage.setItem(WHATS_NEW_KEY, '1');
             const overlay = document.getElementById('whats-new-overlay');
             if (overlay) overlay.classList.remove('active');
+            if (updateReloadPending) {
+                localStorage.setItem(FORCE_WHATS_NEW_KEY, '1');
+                window.location.reload();
+                return;
+            }
+            localStorage.setItem(WHATS_NEW_KEY, '1');
+        }
+
+        function openAddCasePanel() {
+            const overlay = document.getElementById('add-case-overlay');
+            if (overlay) overlay.classList.add('active');
+            const input = document.getElementById('add-case-text');
+            if (input) input.focus();
+        }
+
+        function closeAddCasePanel() {
+            const overlay = document.getElementById('add-case-overlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        function populateOwnerSelect() {
+            const select = document.getElementById('add-case-owner');
+            if (!select) return;
+            const existing = Array.from(select.options).map(o => o.value);
+            staffCache.forEach(name => {
+                if (!existing.includes(name)) {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                }
+            });
+        }
+
+        function renderOwnersList() {
+            const list = document.getElementById('owners-list');
+            if (!list) return;
+            list.innerHTML = staffCache.map(name => {
+                return `
+                    <div class="owner-chip">
+                        <span>${name}</span>
+                        <button class="owner-delete" onclick="deleteOwner('${name}')">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startStaffListener() {
+            return new Promise((resolve) => {
+                let first = true;
+                database.ref('staff').on('value', (snap) => {
+                    const data = snap.val() || {};
+                    staffCache = Object.values(data).filter(Boolean).sort((a, b) => a.localeCompare(b));
+                    populateOwnerSelect();
+                    renderOwnersList();
+                    renderPresenceList();
+                    if (first) {
+                        first = false;
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        async function seedStaffIfNeeded() {
+            const ref = database.ref('staff');
+            const snap = await ref.once('value');
+            if (snap.exists()) return;
+            const updates = {};
+            seedStaff.forEach(name => {
+                const key = ref.push().key;
+                updates[key] = name;
+            });
+            await ref.update(updates);
+        }
+
+        async function addOwner() {
+            const input = document.getElementById('add-owner-input');
+            if (!input) return;
+            const raw = input.value.trim();
+            if (!raw) return;
+            const normalized = formatName(raw);
+            if (staffCache.some(n => n.toLowerCase() === normalized.toLowerCase())) {
+                alert('Owner déjà présent.');
+                return;
+            }
+            await database.ref('staff').push(normalized);
+            input.value = '';
+        }
+
+        async function deleteOwner(name) {
+            if (!confirm(`Supprimer l'owner "${name}" ?`)) return;
+            const staffSnap = await database.ref('staff').once('value');
+            const staffData = staffSnap.val() || {};
+            const entry = Object.entries(staffData).find(([, v]) => v === name);
+            if (entry) {
+                await database.ref(`staff/${entry[0]}`).remove();
+            }
+
+            const updates = {};
+            wordsCache.forEach(w => {
+                if (w.owner === name) {
+                    updates[`words/${w.key}/owner`] = null;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                await database.ref().update(updates);
+            }
+        }
+
+        function openManageWords() {
+            const overlay = document.getElementById('manage-words-overlay');
+            if (overlay) overlay.classList.add('active');
+            const search = document.getElementById('words-search');
+            if (search && !search.dataset.bound) {
+                search.dataset.bound = '1';
+                search.addEventListener('input', () => {
+                    wordsSearchQuery = search.value;
+                    renderWordsList();
+                });
+            }
+            renderWordsList();
+        }
+
+        function closeManageWords() {
+            const overlay = document.getElementById('manage-words-overlay');
+            if (overlay) overlay.classList.remove('active');
+        }
+
+        function renderWordsList() {
+            const list = document.getElementById('words-list');
+            if (!list) return;
+            const q = wordsSearchQuery.trim().toLowerCase();
+            const filtered = q
+                ? wordsCache.filter(w => {
+                    const text = (w.p || '').toLowerCase();
+                    const owner = (w.owner || '').toLowerCase();
+                    return text.includes(q) || owner.includes(q);
+                })
+                : wordsCache;
+
+            list.innerHTML = filtered.map(w => {
+                const ownerValue = w.owner || '';
+                const optionsHtml = [`<option value=""${ownerValue === '' ? ' selected' : ''}>Aucun</option>`]
+                    .concat(staffCache.map(n => {
+                        const selected = n === ownerValue ? ' selected' : '';
+                        return `<option value="${n}"${selected}>${n}</option>`;
+                    }))
+                    .join('');
+                return `
+                    <div class="word-row" data-key="${w.key}">
+                        <input class="word-text" type="text" value="${w.p.replace(/"/g, '&quot;')}">
+                        <select class="word-owner">${optionsHtml}</select>
+                        <button class="word-save" onclick="updateWord('${w.key}')">Sauver</button>
+                        <button class="word-delete" onclick="deleteWord('${w.key}')">Supprimer</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function updateWord(key) {
+            const row = document.querySelector(`.word-row[data-key="${key}"]`);
+            if (!row) return;
+            const textInput = row.querySelector('.word-text');
+            const ownerSelect = row.querySelector('.word-owner');
+            if (!textInput || !ownerSelect) return;
+
+            const normalized = normalizePhrase(textInput.value.trim());
+            if (!normalized) {
+                alert('Le texte ne peut pas être vide.');
+                return;
+            }
+
+            await database.ref(`words/${key}`).update({
+                p: normalized,
+                owner: ownerSelect.value || null
+            });
+            showToast('Case mise a jour.');
+        }
+
+        function showToast(message, options = {}) {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            const duration = typeof options.duration === 'number' ? options.duration : 1400;
+            const centered = Boolean(options.centered);
+            toast.textContent = message;
+            toast.classList.toggle('center', centered);
+            toast.classList.add('show');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.remove('center');
+            }, duration);
+        }
+
+        function deleteWord(key) {
+            if (!confirm('Supprimer cette case ?')) return;
+            database.ref(`words/${key}`).remove();
+        }
+
+        async function seedWordsIfNeeded() {
+            const ref = database.ref('words');
+            const snap = await ref.once('value');
+            if (snap.exists()) return;
+
+            const updates = {};
+            seedWords.forEach(item => {
+                const key = ref.push().key;
+                updates[key] = {
+                    p: item.p,
+                    owner: item.owner || null,
+                    createdAt: Date.now()
+                };
+            });
+            await ref.update(updates);
+        }
+
+        function startWordsListener() {
+            return new Promise((resolve) => {
+                let first = true;
+                database.ref('words').on('value', (snap) => {
+                    const data = snap.val() || {};
+                    wordsCache = Object.entries(data)
+                        .map(([key, val]) => ({ key, ...val }))
+                        .filter(w => w && w.p)
+                        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                    renderWordsList();
+                    if (first) {
+                        first = false;
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        async function submitAddCase() {
+            const input = document.getElementById('add-case-text');
+            const ownerSelect = document.getElementById('add-case-owner');
+            const ownerFreeInput = document.getElementById('add-case-owner-free');
+            if (!input || !ownerSelect) return;
+
+            const rawText = input.value.trim();
+            if (!rawText) {
+                alert("Le texte ne peut pas être vide.");
+                return;
+            }
+
+            const normalized = normalizePhrase(rawText);
+            const allWords = getAllWords();
+            const exists = allWords.some(w => normalizePhrase(w.p) === normalized);
+            if (exists) {
+                alert("Cette case existe déjà.");
+                return;
+            }
+
+            let owner = ownerSelect.value || null;
+            const freeOwner = ownerFreeInput ? ownerFreeInput.value.trim() : '';
+            if (!owner && freeOwner) {
+                owner = formatName(freeOwner);
+                if (!staffCache.some(n => n.toLowerCase() === owner.toLowerCase())) {
+                    await database.ref('staff').push(owner);
+                }
+            }
+            const payload = {
+                p: normalized,
+                owner: owner,
+                createdAt: Date.now()
+            };
+
+            await database.ref('words').push(payload);
+            input.value = '';
+            ownerSelect.value = '';
+            if (ownerFreeInput) ownerFreeInput.value = '';
+            closeAddCasePanel();
+            alert("Case ajoutée !");
         }
 
         function openHOF() { document.getElementById('hof-panel').classList.add('active'); }
@@ -806,7 +1420,7 @@
         // 3. LOGIQUE JEU
         function renderPresenceList() {
             // Cette fonction reste identique, elle affiche juste la liste des gens
-            document.getElementById('check-list').innerHTML = staff.map(name => `
+            document.getElementById('check-list').innerHTML = staffCache.map(name => `
                 <label class="check-item"><input type="checkbox" class="presence-check" value="${name}" checked> ${name}</label>
             `).join('');
         }
@@ -909,14 +1523,15 @@
             ].sort(() => Math.random() - 0.5);
         
             // 2. Construction de la sélection
+            const allWords = getAllWords();
             if (presents.length === 0) {
-                let sansOwner = banqueDeMots.filter(m => !m.owner).sort(() => Math.random() - 0.5);
+                let sansOwner = allWords.filter(m => !m.owner).sort(() => Math.random() - 0.5);
                 finalSelection = sansOwner.slice(0, 20).map(item => ({ p: item.p, isGift: false }));
                 for (let i = 0; i < 5; i++) {
                     finalSelection.push({ p: poolBonus[i], isGift: true });
                 }
             } else {
-                let eligible = banqueDeMots.filter(m => !m.owner || presents.includes(m.owner)).sort(() => Math.random() - 0.5);
+                let eligible = allWords.filter(m => !m.owner || presents.includes(m.owner)).sort(() => Math.random() - 0.5);
                 finalSelection = eligible.slice(0, 25).map(item => ({ p: item.p, isGift: false }));
             }
         
@@ -985,7 +1600,7 @@
                 // On vérifie si TOUTES les cases de la ligne gagnante sont des cadeaux (pas dans la banque)
                 const isFullLuck = winningCombo.every(index => {
                     const txt = cells[index].textContent;
-                    return !banqueDeMots.some(m => m.p === txt); 
+                    return !getAllWords().some(m => m.p === txt); 
                 });
         
                 // Mise à jour visuelle du message Bingo
@@ -1076,7 +1691,7 @@
             const cells = Array.from(document.querySelectorAll('.bingo-cell.clicked'));
             const clickedPhrases = cells
                 .map(cell => normalizePhrase(cell.textContent))
-                .filter(phrase => banqueDeMots.some(m => m.p === phrase));
+                .filter(phrase => getAllWords().some(m => m.p === phrase));
         
             if (clickedPhrases.length === 0) {
                 alert("Aucune case valide cochée !");
@@ -1182,45 +1797,86 @@
 
                 overlay.classList.add('visible');
 
-                const card = document.getElementById('bingo-card');
-                let trackWidthPx = 0;
-                if (card) {
-                    const rect = card.getBoundingClientRect();
-                    const top = Math.max(12, rect.top - 78);
-                    const sideMargin = Math.max(8, Math.round(window.innerWidth * 0.025));
-                    const left = sideMargin;
-                    const width = Math.max(220, window.innerWidth - (sideMargin * 2));
-                    trackWidthPx = width;
-
-                    track.style.top = `${top}px`;
-                    track.style.left = `${left}px`;
-                    track.style.width = `${width}px`;
-                } else {
-                    track.style.top = '18vh';
-                    track.style.left = '2.5vw';
-                    track.style.width = '95vw';
-                    trackWidthPx = Math.max(220, Math.round(window.innerWidth * 0.95));
-                }
+                const trackWidthPx = Math.max(240, window.innerWidth);
+                const trackHeightPx = Math.max(320, window.innerHeight);
+                track.style.top = '0px';
+                track.style.left = '0px';
+                track.style.width = '100vw';
+                track.style.height = '100vh';
 
                 const stepsCount = 16;
                 const stepDelayMs = 120;
                 const stepAnimMs = 650;
                 const trackWidth = Math.max(220, trackWidthPx);
-                const axisY = 30;
-                const sidePadding = 6;
-                const usableWidth = Math.max(60, trackWidth - (sidePadding * 2));
+                const trackHeight = Math.max(220, trackHeightPx);
+                const marginX = Math.max(24, Math.round(trackWidth * 0.06));
+                const marginY = 16;
+                const leftToRight = Math.random() > 0.5;
+                const startX = leftToRight
+                    ? marginX + Math.random() * (trackWidth * 0.2)
+                    : trackWidth - marginX - (Math.random() * (trackWidth * 0.2));
+                const endX = leftToRight
+                    ? trackWidth - marginX - (Math.random() * (trackWidth * 0.2))
+                    : marginX + Math.random() * (trackWidth * 0.2);
+                const startY = marginY + Math.random() * (trackHeight - (marginY * 2));
+                const endY = marginY + Math.random() * (trackHeight - (marginY * 2));
+                const isCurved = Math.random() > 0.5;
+                const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
+
+                let c1 = null;
+                let c2 = null;
+                if (isCurved) {
+                    c1 = {
+                        x: clamp(startX + (leftToRight ? 1 : -1) * (trackWidth * 0.15) + (Math.random() * 120 - 60), marginX, trackWidth - marginX),
+                        y: clamp(startY + (Math.random() * trackHeight * 0.4 - trackHeight * 0.2), marginY, trackHeight - marginY)
+                    };
+                    c2 = {
+                        x: clamp(endX - (leftToRight ? 1 : -1) * (trackWidth * 0.15) + (Math.random() * 120 - 60), marginX, trackWidth - marginX),
+                        y: clamp(endY + (Math.random() * trackHeight * 0.4 - trackHeight * 0.2), marginY, trackHeight - marginY)
+                    };
+                }
 
                 for (let i = 0; i < stepsCount; i++) {
                     const mark = document.createElement('span');
                     mark.className = 'metazooa-footprint';
 
                     const progress = stepsCount === 1 ? 0 : (i / (stepsCount - 1));
-                    const xBase = sidePadding + (progress * usableWidth);
-                    const x = Math.min(trackWidth - sidePadding, Math.max(sidePadding, xBase + (Math.random() * 10 - 5)));
+                    const t = progress;
+                    const oneMinusT = 1 - t;
+                    let xBase = 0;
+                    let yBase = 0;
+                    let dx = endX - startX;
+                    let dy = endY - startY;
+
+                    if (isCurved) {
+                        xBase = (oneMinusT * oneMinusT * oneMinusT * startX)
+                            + (3 * oneMinusT * oneMinusT * t * c1.x)
+                            + (3 * oneMinusT * t * t * c2.x)
+                            + (t * t * t * endX);
+                        yBase = (oneMinusT * oneMinusT * oneMinusT * startY)
+                            + (3 * oneMinusT * oneMinusT * t * c1.y)
+                            + (3 * oneMinusT * t * t * c2.y)
+                            + (t * t * t * endY);
+                        dx = (3 * oneMinusT * oneMinusT * (c1.x - startX))
+                            + (6 * oneMinusT * t * (c2.x - c1.x))
+                            + (3 * t * t * (endX - c2.x));
+                        dy = (3 * oneMinusT * oneMinusT * (c1.y - startY))
+                            + (6 * oneMinusT * t * (c2.y - c1.y))
+                            + (3 * t * t * (endY - c2.y));
+                    } else {
+                        xBase = startX + (endX - startX) * t;
+                        yBase = startY + (endY - startY) * t;
+                    }
+
+                    const tangentLen = Math.max(0.001, Math.hypot(dx, dy));
+                    const nx = -dy / tangentLen;
+                    const ny = dx / tangentLen;
                     const sideOffset = i % 2 === 0 ? -16 : 16;
-                    const y = axisY + sideOffset + (Math.random() * 8 - 4);
-                    const rot = 80;
-                    const flip = i % 2 === 0 ? 1 : -1;
+                    const x = clamp(xBase + (nx * sideOffset) + (Math.random() * 4 - 2), 0, trackWidth - 4);
+                    const y = clamp(yBase + (ny * sideOffset) + (Math.random() * 4 - 2), 0, trackHeight - 4);
+                    const tangentDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+                    const rot = 90 + tangentDeg;
+                    const flip = sideOffset < 0 ? 1 : -1;
 
                     mark.style.left = `${x}px`;
                     mark.style.top = `${y}px`;
@@ -1256,7 +1912,15 @@
         // 4. INIT
         document.addEventListener('DOMContentLoaded', () => {
             updatePseudoButton();
-            renderPresenceList();
+            startVersionListener();
+            showWhatsNewOnce();
+            seedStaffIfNeeded()
+                .then(() => startStaffListener())
+                .then(() => seedWordsIfNeeded())
+                .then(() => startWordsListener())
+                .then(() => {
+                    initSessionAndGrid();
+                });
 
             const metazooaBtn = document.getElementById('metazooa-btn');
             if (metazooaBtn) {
@@ -1313,7 +1977,7 @@
             }).join('');
         });
             
-        initSessionAndGrid();
+        
 
         // A. Écouter le signal de Bingo pour synchroniser les stats et l'alerte
         database.ref('bingo_signal').on('value', (snapshot) => {
@@ -1332,7 +1996,7 @@
             const phrase = normalizePhrase(cell.textContent);
             
             // VERIFICATION : On ne compte la case que si elle fait partie de la banque officielle
-            const existeDansBanque = banqueDeMots.some(m => m.p === phrase);
+            const existeDansBanque = getAllWords().some(m => m.p === phrase);
             
             if (existeDansBanque) {
                 const safeKey = safeEncode(phrase);
@@ -1363,7 +2027,7 @@
             });
 
             // 3. On croise la banque de mots avec nos calculs de sessions
-            const allStats = banqueDeMots.map(item => {
+            const allStats = getAllWords().map(item => {
                 const phrase = normalizePhrase(item.p);
                 const safeKey = safeEncode(phrase);
                 const val = globalCounts[safeKey] || 0;
