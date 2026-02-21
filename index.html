@@ -132,19 +132,46 @@
 
         h1 { color: #333; margin-bottom: 15px; text-shadow: 1px 1px 0px white; font-size: 1.5rem; }
 
-        /* --- Boutons Navigation --- */
-        #presence-toggle-btn, #hof-btn { 
-            position: absolute; top: 15px; background: white; border: none; 
-            border-radius: 50%; width: 45px; height: 45px; cursor: pointer; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 100; 
+        #main-title-wrap {
+            text-align: center;
+            margin-top: 0px;
+            margin-bottom: 14px;
+            width: 100%;
         }
-        #presence-toggle-btn { left: 15px; font-size: 1.2rem; }
-        #hof-btn { right: 15px; font-size: 1.5rem; }
-        
-        /* On aligne le style sur celui du bouton HoF */
-       #session-lock-btn, #hof-btn {
-            position: absolute;
+
+        #main-title {
+            margin: 0;
+            display: block;
+            font-size: clamp(2.2rem, 8vw, 3.4rem);
+            font-weight: 900;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            color: #0f172a;
+            -webkit-text-fill-color: #0f172a;
+            text-shadow: 0 2px 0 rgba(255,255,255,0.85), 0 10px 20px rgba(15,23,42,0.22);
+            line-height: 1.05;
+        }
+
+        /* --- Actions rapides (groupées) --- */
+        #top-actions {
+            position: fixed;
             top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .top-actions-left,
+        .top-actions-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .top-action-btn {
             background: white;
             border: none;
             border-radius: 50%;
@@ -152,18 +179,89 @@
             height: 45px;
             cursor: pointer;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: transform 0.2s;
+            color: #333;
+            text-decoration: none;
+            user-select: none;
         }
-        
-        #session-lock-btn { left: 15px; font-size: 1.2rem; }
-        #hof-btn { right: 15px; font-size: 1.5rem; }
-        
-        #session-lock-btn:hover, #hof-btn:hover { transform: scale(1.1); }
-        
+
+        .top-action-btn:hover { transform: scale(1.08); }
+
+        #session-lock-btn { font-size: 1.2rem; }
+        #hof-btn { font-size: 1.5rem; }
+
+        #metazooa-btn .metazooa-logo {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #metazooa-btn img {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
+        }
+
+        #metazooa-loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.25);
+            backdrop-filter: blur(2px);
+            z-index: 7000;
+            display: none;
+            pointer-events: none;
+        }
+
+        #metazooa-loading.visible {
+            display: block;
+        }
+
+        .metazooa-loading-track {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 72px;
+        }
+
+        .metazooa-footprint {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 42px;
+            height: 42px;
+            opacity: 0;
+            background-image: url('./Emprunte-goeland.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 999px;
+            transform: scale(0.45) scaleY(var(--flip, 1)) rotate(var(--rot, 0deg));
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25));
+            animation: metazooaStep 650ms steps(3, end) forwards;
+            animation-delay: var(--delay, 0ms);
+            will-change: transform, opacity;
+        }
+
+        @keyframes metazooaStep {
+            0% { opacity: 0; transform: scale(0.45) scaleY(var(--flip, 1)) rotate(var(--rot, 0deg)); }
+            45% { opacity: 1; transform: scale(1) scaleY(var(--flip, 1)) rotate(var(--rot, 0deg)); }
+            100% { opacity: 1; transform: scale(1) scaleY(var(--flip, 1)) rotate(var(--rot, 0deg)); }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .metazooa-footprint {
+                filter: drop-shadow(0 1px 1px rgba(0,0,0,0.35));
+            }
+        }
+
+
         /* --- Panneau Présence --- */
         #presence-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; z-index: 3500; }
         #presence-overlay.visible { display: block; }
@@ -402,11 +500,23 @@
         ">Fermer</button>
     </div>
     
-    <button id="session-lock-btn" onclick="manualCloseSession()" title="Clôturer la session">🔒</button>
-    <button id="hof-btn" onclick="openHOF()">🏆</button>
+    <div id="top-actions">
+        <div class="top-actions-left">
+            <button id="session-lock-btn" class="top-action-btn" onclick="manualCloseSession()" title="Clôturer la session" aria-label="Clôturer la session">🔒</button>
+            <button id="hof-btn" class="top-action-btn" onclick="openHOF()" title="Ouvrir le Hall of Fame" aria-label="Ouvrir le Hall of Fame">🏆</button>
+        </div>
+        <div class="top-actions-right">
+            <a id="metazooa-btn" class="top-action-btn" href="https://metazooa.com" target="_blank" rel="noopener noreferrer" title="Ouvrir MetaZooa" aria-label="Ouvrir le site MetaZooa">
+                <picture class="metazooa-logo">
+                    <source media="(prefers-color-scheme: dark)" srcset="./Logo-métazooa-light.png">
+                    <img src="./Logo-métazooa-dark.png" alt="MetaZooa">
+                </picture>
+            </a>
+        </div>
+    </div>
     
-    <div style="text-align: center; margin-top: 20px; margin-bottom: 15px;">
-        <h1>⚠️ Big Problems ⚠️</h1>
+    <div id="main-title-wrap">
+        <h1 id="main-title">⚠️ Big Problems ⚠️</h1>
     </div>
     
     <div id="bingo-message">BINGO!</div>
@@ -1054,11 +1164,103 @@
                 setTimeout(() => alertBox.remove(), 500);
             }, 6000);
         }
+
+        function playMetazooaLoading() {
+            return new Promise((resolve) => {
+                let overlay = document.getElementById('metazooa-loading');
+
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'metazooa-loading';
+                    overlay.innerHTML = '<div class="metazooa-loading-track"></div>';
+                    document.body.appendChild(overlay);
+                }
+
+                const track = overlay.querySelector('.metazooa-loading-track');
+                track.innerHTML = '';
+
+                overlay.classList.add('visible');
+
+                const card = document.getElementById('bingo-card');
+                let trackWidthPx = 0;
+                if (card) {
+                    const rect = card.getBoundingClientRect();
+                    const top = Math.max(12, rect.top - 78);
+                    const sideMargin = Math.max(8, Math.round(window.innerWidth * 0.025));
+                    const left = sideMargin;
+                    const width = Math.max(220, window.innerWidth - (sideMargin * 2));
+                    trackWidthPx = width;
+
+                    track.style.top = `${top}px`;
+                    track.style.left = `${left}px`;
+                    track.style.width = `${width}px`;
+                } else {
+                    track.style.top = '18vh';
+                    track.style.left = '2.5vw';
+                    track.style.width = '95vw';
+                    trackWidthPx = Math.max(220, Math.round(window.innerWidth * 0.95));
+                }
+
+                const stepsCount = 16;
+                const stepDelayMs = 120;
+                const stepAnimMs = 650;
+                const trackWidth = Math.max(220, trackWidthPx);
+                const axisY = 30;
+                const sidePadding = 6;
+                const usableWidth = Math.max(60, trackWidth - (sidePadding * 2));
+
+                for (let i = 0; i < stepsCount; i++) {
+                    const mark = document.createElement('span');
+                    mark.className = 'metazooa-footprint';
+
+                    const progress = stepsCount === 1 ? 0 : (i / (stepsCount - 1));
+                    const xBase = sidePadding + (progress * usableWidth);
+                    const x = Math.min(trackWidth - sidePadding, Math.max(sidePadding, xBase + (Math.random() * 10 - 5)));
+                    const sideOffset = i % 2 === 0 ? -16 : 16;
+                    const y = axisY + sideOffset + (Math.random() * 8 - 4);
+                    const rot = 80;
+                    const flip = i % 2 === 0 ? 1 : -1;
+
+                    mark.style.left = `${x}px`;
+                    mark.style.top = `${y}px`;
+                    mark.style.setProperty('--rot', `${rot}deg`);
+                    mark.style.setProperty('--flip', `${flip}`);
+                    mark.style.setProperty('--delay', `${Math.round(i * stepDelayMs)}ms`);
+                    track.appendChild(mark);
+                }
+
+                const totalDuration = ((stepsCount - 1) * stepDelayMs) + stepAnimMs;
+                setTimeout(() => {
+                    overlay.classList.remove('visible');
+                    resolve();
+                }, totalDuration);
+            });
+        }
+
+        async function openMetazooaWithLoading(event) {
+            event.preventDefault();
+            const btn = event.currentTarget;
+            if (!btn || btn.dataset.loading === '1') return;
+
+            btn.dataset.loading = '1';
+            const targetUrl = btn.href;
+
+            await playMetazooaLoading();
+
+            window.open(targetUrl, '_blank', 'noopener,noreferrer');
+
+            btn.dataset.loading = '0';
+        }
         
         // 4. INIT
         document.addEventListener('DOMContentLoaded', () => {
             updatePseudoButton();
             renderPresenceList();
+
+            const metazooaBtn = document.getElementById('metazooa-btn');
+            if (metazooaBtn) {
+                metazooaBtn.addEventListener('click', openMetazooaWithLoading);
+            }
             
         // --- LISTENER DU HALL OF FAME (CHAMPIONS) ---
         database.ref('winners').on('value', (snap) => {
