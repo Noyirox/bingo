@@ -1075,8 +1075,35 @@
             { p: "Quiproquo", owner: null }, { p: "Administration française 🇫🇷", owner: null }
         ];
         let wordsCache = [];
+        let wordsReady = false;
+        let wordsReadyWaiters = [];
         let wordsSearchQuery = '';
         const getAllWords = () => wordsCache;
+
+        function markWordsReady() {
+            if (wordsReady || wordsCache.length === 0) return;
+            wordsReady = true;
+            wordsReadyWaiters.forEach(resolve => resolve(true));
+            wordsReadyWaiters = [];
+        }
+
+        function waitForWordsReady(timeoutMs = 5000) {
+            if (wordsReady || wordsCache.length > 0) return Promise.resolve(true);
+            return new Promise(resolve => {
+                const timer = setTimeout(() => {
+                    const idx = wordsReadyWaiters.indexOf(resolve);
+                    if (idx >= 0) wordsReadyWaiters.splice(idx, 1);
+                    resolve(false);
+                }, timeoutMs);
+
+                const wrappedResolve = (value) => {
+                    clearTimeout(timer);
+                    resolve(value);
+                };
+
+                wordsReadyWaiters.push(wrappedResolve);
+            });
+        }
         
         // 2. NAVIGATION
         function togglePresencePanel() {
@@ -1363,6 +1390,7 @@
                         .map(([key, val]) => ({ key, ...val }))
                         .filter(w => w && w.p)
                         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                    markWordsReady();
                     renderWordsList();
                     if (first) {
                         first = false;
@@ -1489,6 +1517,7 @@
 
         async function initSessionAndGrid() {
             await ensureActiveSession();
+            await waitForWordsReady();
             const saved = localStorage.getItem(STORAGE_KEY);
             const card = document.getElementById('bingo-card');
             if (!card) return;
@@ -1508,6 +1537,12 @@
         function createBingoCard() {
             const card = document.getElementById('bingo-card');
             if (!card) return;
+
+            const allWords = getAllWords();
+            if (!Array.isArray(allWords) || allWords.length === 0) {
+                showToast('Chargement des cases en cours...');
+                return;
+            }
             
             card.innerHTML = ''; // Vide la grille actuelle
             
@@ -1523,7 +1558,6 @@
             ].sort(() => Math.random() - 0.5);
         
             // 2. Construction de la sélection
-            const allWords = getAllWords();
             if (presents.length === 0) {
                 let sansOwner = allWords.filter(m => !m.owner).sort(() => Math.random() - 0.5);
                 finalSelection = sansOwner.slice(0, 20).map(item => ({ p: item.p, isGift: false }));
@@ -1539,7 +1573,7 @@
             if (finalSelection.length < 25) {
                 let j = 0;
                 while (finalSelection.length < 25) {
-                    finalSelection.push({ p: "Case libre : " + (poolBonus[j % poolBonus.length]), isGift: true });
+                    finalSelection.push({ p: "Case libre : " + (poolBonus[j % poolBonus.length]), isGift: false });
                     j++;
                 }
             }
